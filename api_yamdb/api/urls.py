@@ -1,15 +1,20 @@
-from django.urls import include, path
-# from django.views.generic import TemplateView
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-
+from .views import CategoryViewSet, GenreViewSet, TitleViewSet
 from .views import UserViewSet, UserMeVeiwSet
 
 router_api_v1 = DefaultRouter()
+
+# Регистрация всех необходимых вьюсетов
+router_api_v1.register(r'v1/categories', CategoryViewSet, basename='category')
+router_api_v1.register(r'v1/genres', GenreViewSet, basename='genre')
+router_api_v1.register(r'v1/titles', TitleViewSet, basename='title')
 router_api_v1.register(
     'users',
     UserViewSet,
     basename='users'
 )
+
 # router_api_v1.register(
 #     'users/me',
 #     UserMeVeiwSet,
