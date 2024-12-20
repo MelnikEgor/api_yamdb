@@ -1,5 +1,11 @@
 from django.db import models
 
+from django.contrib.auth import get_user_model
+
+from django.db.models import Avg
+
+User = get_user_model()
+
 
 class Category(models.Model):
     name = models.CharField(max_length=256, verbose_name="Категория")
@@ -28,6 +34,14 @@ class Title(models.Model):
     category = models.ForeignKey(
         Category, related_name="titles", on_delete=models.SET_NULL, null=True
     )
+    # rating = models.FloatField(
+    #     blank=True, null=True, verbose_name="Рейтинг", editable=False
+    # )
+
+    # def recalculate_rating(self):
+    #     avg_score = self.reviews.aggregate(Avg('score'))['score__avg']
+    #     self.rating = avg_score
+    #     self.save()
 
     def __str__(self):
         return self.name
@@ -43,3 +57,20 @@ class TitleGenre(models.Model):
 
     def __str__(self):
         return f"{self.title.name} - {self.genre.name}"
+
+
+class Review(models.Model):
+    title_id = models.ForeignKey(Title, on_delete=models.CASCADE,
+                                 related_name='reviews')
+    text = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    score = models.IntegerField()
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+
+class Comment(models.Model):
+    review_id = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    pub_date = models.DateTimeField(auto_now_add=True)
