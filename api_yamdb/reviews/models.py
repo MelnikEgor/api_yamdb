@@ -1,4 +1,9 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+from django.db.models import Avg
+
+
+User = get_user_model()
 
 
 class Category(models.Model):
@@ -29,6 +34,10 @@ class Title(models.Model):
         Category, related_name="titles", on_delete=models.SET_NULL, null=True
     )
 
+    @property
+    def rating(self):
+        return self.reviews.aggregate(Avg('score'))['score__avg']
+
     def __str__(self):
         return self.name
 
@@ -43,3 +52,20 @@ class TitleGenre(models.Model):
 
     def __str__(self):
         return f"{self.title.name} - {self.genre.name}"
+
+      
+class Review(models.Model):
+    title = models.ForeignKey(Title, on_delete=models.CASCADE,
+                              related_name='reviews')
+    text = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    score = models.IntegerField()
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    pub_date = models.DateTimeField(auto_now_add=True)
