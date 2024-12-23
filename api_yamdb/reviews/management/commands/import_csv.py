@@ -52,9 +52,8 @@ class Command(BaseCommand):
                             }
                         )
                     elif 'review' in csv_file_path:
-                        # Получаем объект по связке с моделью Title
                         title = Title.objects.get(id=row['title_id'])
-                        user = MyUser.objects.get(username=row['author'])
+                        user = MyUser.objects.get(id=row['author'])
                         Review.objects.create(
                             text=row['text'],
                             author=user,

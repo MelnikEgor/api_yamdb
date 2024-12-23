@@ -34,14 +34,10 @@ class Title(models.Model):
     category = models.ForeignKey(
         Category, related_name="titles", on_delete=models.SET_NULL, null=True
     )
-    # rating = models.FloatField(
-    #     blank=True, null=True, verbose_name="Рейтинг", editable=False
-    # )
 
-    # def recalculate_rating(self):
-    #     avg_score = self.reviews.aggregate(Avg('score'))['score__avg']
-    #     self.rating = avg_score
-    #     self.save()
+    @property
+    def rating(self):
+        return self.reviews.aggregate(Avg('score'))['score__avg']
 
     def __str__(self):
         return self.name
@@ -60,8 +56,8 @@ class TitleGenre(models.Model):
 
 
 class Review(models.Model):
-    title_id = models.ForeignKey(Title, on_delete=models.CASCADE,
-                                 related_name='reviews')
+    title = models.ForeignKey(Title, on_delete=models.CASCADE,
+                              related_name='reviews')
     text = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     score = models.IntegerField()
@@ -69,7 +65,7 @@ class Review(models.Model):
 
 
 class Comment(models.Model):
-    review_id = models.ForeignKey(
+    review = models.ForeignKey(
         Review, on_delete=models.CASCADE, related_name='comments')
     text = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE)
