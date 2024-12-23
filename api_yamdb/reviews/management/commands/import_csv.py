@@ -80,10 +80,3 @@ class Command(BaseCommand):
 
         except Exception as e:
             raise CommandError(f'Ошибка при импорте данных: {e}')
-                    else:
-                        raise CommandError('Неизвестный тип файла')
-
-                self.stdout.write(self.style.SUCCESS(f'Успешно импортировано {reader.line_num} записей из {csv_file_path}'))
-
-        except Exception as e:
-            raise CommandError(f'Ошибка при импорте данных: {e}')

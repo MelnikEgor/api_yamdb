@@ -1,18 +1,23 @@
-from rest_framework import serializers
-from reviews.models import Category, Genre, Title, Review, Comment
+from django.contrib.auth import get_user_model
 from django.utils.timezone import now
+from rest_framework import serializers
 
+from rest_framework.relations import SlugRelatedField
+from rest_framework.validators import UniqueTogetherValidator
+
+from reviews.models import Category, Genre, Title, Review, Comment
+
+
+User = get_user_model()
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Category
         fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Genre
         fields = ('name', 'slug')
@@ -87,3 +92,25 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'description', 'category', 'genre')
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role',)
+
+    # def create(self, validated_data):
+    #     print(self.request.data)
+    #     # serializer = UserSerializer(data=request.data)
+    #     if self.request.data['username'] != 'me':
+    #         return User.objects.create(**validated_data)
+    #         # return super().create(request)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserMeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role',)
