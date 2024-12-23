@@ -1,8 +1,7 @@
 from rest_framework import serializers
-
 from reviews.models import Category, Genre, Title, Review, Comment
-
 from django.utils.timezone import now
+
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -20,7 +19,6 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-
     category = CategorySerializer()
     genre = GenreSerializer(many=True)
     rating = serializers.SerializerMethodField(read_only=True)
@@ -79,3 +77,13 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
         read_only_fields = ('author', 'review', 'pub_date')
+    category = CategorySerializer(read_only=True)
+    genre = serializers.SlugRelatedField(
+        many=True,
+        queryset=Genre.objects.all(),
+        slug_field='slug'
+    )
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year', 'description', 'category', 'genre')

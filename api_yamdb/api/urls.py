@@ -1,5 +1,4 @@
 from django.urls import path, include
-
 from rest_framework.routers import DefaultRouter
 
 from .views import (CategoryViewSet, GenreViewSet, TitleViewSet,
@@ -29,3 +28,4 @@ urlpatterns = [
         path('auth/', include('djoser.urls.jwt')),
     ])),
 ]
+

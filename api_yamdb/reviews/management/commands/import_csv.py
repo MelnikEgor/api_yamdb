@@ -2,6 +2,7 @@ import csv
 import os
 
 from django.core.management.base import BaseCommand, CommandError
+
 from reviews.models import Category, Genre, Title, Review, Comment
 from users.models import MyUser
 
@@ -12,6 +13,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('csv_file', type=str,
                             help='Путь к CSV файлу для импорта данных')
+
 
     def handle(self, *args, **kwargs):
         csv_file_path = os.path.join('static/data', kwargs['csv_file'])
@@ -75,6 +77,13 @@ class Command(BaseCommand):
 
                 self.stdout.write(self.style.SUCCESS(
                     f'Успешно импортировано {reader.line_num} записей из {csv_file_path}'))
+
+        except Exception as e:
+            raise CommandError(f'Ошибка при импорте данных: {e}')
+                    else:
+                        raise CommandError('Неизвестный тип файла')
+
+                self.stdout.write(self.style.SUCCESS(f'Успешно импортировано {reader.line_num} записей из {csv_file_path}'))
 
         except Exception as e:
             raise CommandError(f'Ошибка при импорте данных: {e}')
