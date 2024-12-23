@@ -1,9 +1,22 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.filters import SearchFilter
-from django_filters.rest_framework import DjangoFilterBackend
+# from django_filters.rest_framework import DjangoFilterBackend
 from reviews.models import Category, Genre, Title
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
+
+from django.contrib.auth import get_user_model
+from django.shortcuts import render, get_list_or_404
+from rest_framework import filters, mixins, viewsets
+from rest_framework.decorators import action
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+from .serializers import UserSerializer
+
+
+User = get_user_model()
 
 
 class BaseModelViewSet(viewsets.ModelViewSet):
@@ -34,20 +47,8 @@ class GenreViewSet(BaseModelViewSet):
 class TitleViewSet(BaseModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['category__slug', 'genre__slug', 'name', 'year']
-from django.contrib.auth import get_user_model
-from django.shortcuts import render, get_list_or_404
-from rest_framework import filters, mixins, viewsets
-from rest_framework.decorators import action
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-
-from .serializers import UserSerializer
-
-
-User = get_user_model()
+    # filter_backends = [DjangoFilterBackend]
+    # filterset_fields = ['category__slug', 'genre__slug', 'name', 'year']
 
 
 class UserViewSet(

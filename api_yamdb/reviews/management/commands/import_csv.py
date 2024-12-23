@@ -4,6 +4,7 @@ import os
 from django.core.management.base import BaseCommand, CommandError
 from reviews.models import Category, Genre, Title
 
+
 class Command(BaseCommand):
     help = 'Импорт данных из CSV файлов в модели Category, Genre и Title'
 
@@ -54,4 +55,3 @@ class Command(BaseCommand):
 
         except Exception as e:
             raise CommandError(f'Ошибка при импорте данных: {e}')
-
