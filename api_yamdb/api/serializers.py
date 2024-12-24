@@ -2,25 +2,54 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from rest_framework import serializers
 
-from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
+# from rest_framework.relations import SlugRelatedField
+# from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Category, Genre, Title, Review, Comment
+from api_yamdb.settings import PATERN
 
 
 User = get_user_model()
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=256)
+    slug = serializers.RegexField(PATERN, max_length=50)
+
     class Meta:
         model = Category
         fields = ('name', 'slug')
 
+    # def validate_name(self, value):
+    #     # current_year = now().year
+    #     if len(value) > 256:
+    #         raise serializers.ValidationError()
+    #     return value
+
+    # def validate_slug(self, value):
+    #     if len(value) > 50:
+    #         raise serializers.ValidationError()
+    #     return value
+
 
 class GenreSerializer(serializers.ModelSerializer):
+    # slug = serializers.SlugRelatedField(max_length=50, unique=True)
+    name = serializers.CharField(max_length=256)
+    slug = serializers.RegexField(PATERN, max_length=50)
+
     class Meta:
         model = Genre
         fields = ('name', 'slug')
+
+    # def validate_slug(self, value):
+    #     if len(value) > 50:
+    #         raise serializers.ValidationError()
+    #     return value
+
+    def create(self, validated_data):
+        validated_data.is_valid()
+        genre = Genre.objects.create(**validated_data)
+        return genre
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -94,23 +123,55 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'year', 'description', 'category', 'genre')
 
 
-class UserSerializer(serializers.ModelSerializer):
+# class UserSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role',)
+#     class Meta:
+#         model = User
+#         fields = (
+#             'username',
+#             'email',
+#             'first_name',
+#             'last_name',
+#             'bio',
+#             'role',
+#         )
 
-    # def create(self, validated_data):
-    #     print(self.request.data)
-    #     # serializer = UserSerializer(data=request.data)
-    #     if self.request.data['username'] != 'me':
-    #         return User.objects.create(**validated_data)
-    #         # return super().create(request)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def validate_username(self, value):
+#         if value != 'me':
+#             return value
+#         raise serializers.ValidationError(
+#             "Имя пользователя не должно быть 'me'"
+#         )
+
+#     def create(self, validated_data):
+#         user = User.objects.create(
+#             username=self.validated_data['username'],
+#             email=self.validated_data['email'],
+#             role=self.validated_data['role'],
+#             is_staff=True if validated_data['role'] == 'admin' else False
+#         )
+#         return user
 
 
-class UserMeSerializer(serializers.ModelSerializer):
+#     # def create(self, validated_data):
+#     #     print(self.request.data)
+#     #     # serializer = UserSerializer(data=request.data)
+#     #     if self.request.data['username'] != 'me':
+#     #         return User.objects.create(**validated_data)
+#     #         # return super().create(request)
+#     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role',)
+
+# class UserMeSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = User
+#         fields = (
+#             'username',
+#             'email',
+#             'first_name',
+#             'last_name',
+#             'bio',
+#             'role'
+#         )
+#         read_only_fields = ('role',)

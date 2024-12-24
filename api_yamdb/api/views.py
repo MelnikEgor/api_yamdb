@@ -11,17 +11,13 @@ from rest_framework.response import Response
 from reviews.models import Category, Genre, Title, TitleGenre, Review, Comment
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer)
-from .permissions import IsAdminOrReadOnly
+from .permissions import IsAdminOrReadOnly, IsAdminOrModerOrReadOnly, IsAdminAndIsAuthenticated
 
 from django.contrib.auth import get_user_model
-from django.shortcuts import render, get_list_or_404
 from rest_framework import filters, mixins, viewsets
-from rest_framework.decorators import action
-from rest_framework.views import APIView
+
 from rest_framework.response import Response
 from rest_framework import status
-
-from .serializers import UserSerializer
 
 
 User = get_user_model()
@@ -58,6 +54,12 @@ class GenreViewSet(CreateModelMixin, ListModelMixin,
     search_fields = ('name',)
     permission_classes = (IsAdminOrReadOnly,)
     lookup_field = 'slug'
+
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valide()
+    #     super().create(serializer, *args, **kwargs)
+    #     return (Response(serializer.data, status=status.HTTP_201_CREATED))
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -109,6 +111,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    permission_classes = [IsAdminOrModerOrReadOnly]
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
@@ -134,6 +137,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = [IsAdminOrModerOrReadOnly]
 
     def get_queryset(self):
         review_id = self.kwargs.get('review_id')
@@ -145,54 +149,3 @@ class CommentViewSet(viewsets.ModelViewSet):
         author = self.request.user
 
         serializer.save(author=author, review=review)
-
-
-class UserViewSet(
-    viewsets.ModelViewSet,
-    # mixins.CreateModelMixin,
-    # mixins.DestroyModelMixin,
-    # mixins.ListModelMixin,
-    # mixins.RetrieveModelMixin,
-    # mixins.UpdateModelMixin
-):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    lookup_field = 'username'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ['username']
-
-    def create(self, request):
-        print(request.data)
-        serializer = UserSerializer(data=request.data)
-        if request.data['username'] != 'me':
-            return super().create(request)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # @action(detail=True, methods=['get', 'patch'])
-    # def me(self, request):
-    #     user = get_list_or_404(User.objects.all(), username=request.user)
-    #     serializer = UserSerializer(user, data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UserMeVeiw(APIView):
-
-    def get_user(self, request):
-        return get_object_or_404(User.objects.all(), username=request.user)
-
-    def get(self, request):
-        user = self.get_user(request)
-        print(user)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        user = self.get_user(request)
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

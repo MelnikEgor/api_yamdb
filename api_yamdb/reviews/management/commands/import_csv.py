@@ -1,10 +1,11 @@
 import csv
 import os
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
-
 from reviews.models import Category, Genre, Title, Review, Comment
-from users.models import MyUser
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -13,7 +14,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('csv_file', type=str,
                             help='Путь к CSV файлу для импорта данных')
-
 
     def handle(self, *args, **kwargs):
         csv_file_path = os.path.join('static/data', kwargs['csv_file'])
@@ -26,7 +26,19 @@ class Command(BaseCommand):
                 reader = csv.DictReader(csvfile)
 
                 for row in reader:
-                    if 'category' in csv_file_path:
+                    if 'users' in csv_file_path:
+                        User.objects.update_or_create(
+                            id=row['id'],
+                            defaults={
+                                'username': row['username'],
+                                'email': row['email'],
+                                'role': row.get('role', 'user'),
+                                'bio': row.get('role', ''),
+                                'first_name': row.get('first_name', ''),
+                                'last_name': row.get('last_name', '')
+                            }
+                        )
+                    elif 'category' in csv_file_path:
                         Category.objects.update_or_create(
                             id=row['id'],
                             defaults={
@@ -54,23 +66,24 @@ class Command(BaseCommand):
                             }
                         )
                     elif 'review' in csv_file_path:
-                        title = Title.objects.get(id=row['title_id'])
-                        user = MyUser.objects.get(id=row['author'])
+                        user = User.objects.get(id=row['author_id'])
                         Review.objects.create(
+                            id=row['id'],
+                            title_id=row['title_id'],
                             text=row['text'],
                             author=user,
                             score=row['score'],
                             pub_date=row['pub_date'],
-                            title_id=title
                         )
-                    elif 'comment' in csv_file_path:
-                        # Получаем объект по связке с моделью Review
+                    elif 'comments' in csv_file_path:
                         review = Review.objects.get(id=row['review_id'])
+                        user = User.objects.get(id=row['author_id'])
                         Comment.objects.create(
+                            id=row['id'],
                             text=row['text'],
-                            author=row['author'],
                             pub_date=row['pub_date'],
-                            review_id=review
+                            author=user,
+                            review=review,
                         )
                     else:
                         raise CommandError('Неизвестный тип файла')

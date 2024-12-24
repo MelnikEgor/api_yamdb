@@ -14,7 +14,8 @@ class MyUser(AbstractUser):
     password = models.CharField('password', max_length=128, blank=True)
     email = models.EmailField(_('email address'), unique=True)
     bio = models.TextField('Биография', blank=True)
-    role = models.CharField(max_length=16, choices=ROLE, default='user')
+    role = models.CharField('Роль', max_length=16, choices=ROLE, default='user')
+    confirmation_code = models.CharField('Код подтверждения', max_length=255, null=True)
 
     # class Meta:
     #     verbos_name = 'User'
