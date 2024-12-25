@@ -141,4 +141,4 @@ EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 
 DEFAULT_FROM_EMAIL = 'info_yamdb@lst.com'
 
-PATERN = r'^-$'
+PATERN = r'^[-a-zA-Z0-9_]+$'

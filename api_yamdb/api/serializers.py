@@ -11,7 +11,6 @@ from api_yamdb.settings import PATERN
 
 User = get_user_model()
 
-
 class CategorySerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=256)
     slug = serializers.RegexField(PATERN, max_length=50)
