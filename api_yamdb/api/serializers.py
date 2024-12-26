@@ -12,48 +12,35 @@ from api_yamdb.settings import PATERN
 User = get_user_model()
 
 class CategorySerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=256)
-    slug = serializers.RegexField(PATERN, max_length=50)
-
     class Meta:
         model = Category
         fields = ('name', 'slug')
 
-    # def validate_name(self, value):
-    #     # current_year = now().year
-    #     if len(value) > 256:
-    #         raise serializers.ValidationError()
-    #     return value
-
-    # def validate_slug(self, value):
-    #     if len(value) > 50:
-    #         raise serializers.ValidationError()
-    #     return value
+    def create(self, validated_data):
+        category = Category.objects.create(**validated_data)
+        return category
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    # slug = serializers.SlugRelatedField(max_length=50, unique=True)
-    name = serializers.CharField(max_length=256)
-    slug = serializers.RegexField(PATERN, max_length=50)
-
     class Meta:
         model = Genre
         fields = ('name', 'slug')
 
-    # def validate_slug(self, value):
-    #     if len(value) > 50:
-    #         raise serializers.ValidationError()
-    #     return value
-
     def create(self, validated_data):
-        validated_data.is_valid()
         genre = Genre.objects.create(**validated_data)
         return genre
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    category = CategorySerializer()
-    genre = GenreSerializer(many=True)
+    # category = CategorySerializer()
+    # genre = GenreSerializer(many=True)
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(), slug_field='slug', write_only=True
+    )
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(), slug_field='slug', many=True,
+        write_only=True
+    )
     rating = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -86,6 +73,26 @@ class TitleSerializer(serializers.ModelSerializer):
             return round(obj.rating, 2)
         return 0
 
+    def to_representation(self, instance):
+        """Переопределяем вывод данных."""
+        representation = super().to_representation(instance)
+
+        # Преобразование category
+        category = instance.category
+        if category:
+            representation['category'] = {
+                'name': category.name,
+                'slug': category.slug
+            }
+
+        # Преобразование genre
+        genres = instance.genre.all()
+        representation['genre'] = [
+            {'name': genre.name, 'slug': genre.slug} for genre in genres
+        ]
+
+        return representation
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
@@ -110,16 +117,17 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
         read_only_fields = ('author', 'review', 'pub_date')
-    category = CategorySerializer(read_only=True)
-    genre = serializers.SlugRelatedField(
-        many=True,
-        queryset=Genre.objects.all(),
-        slug_field='slug'
-    )
 
-    class Meta:
-        model = Title
-        fields = ('id', 'name', 'year', 'description', 'category', 'genre')
+    # category = CategorySerializer(read_only=True)
+    # genre = serializers.SlugRelatedField(
+    #     many=True,
+    #     queryset=Genre.objects.all(),
+    #     slug_field='slug'
+    # )
+
+    # class Meta:
+    #     model = Title
+    #     fields = ('id', 'name', 'year', 'description', 'category', 'genre')
 
 
 # class UserSerializer(serializers.ModelSerializer):
