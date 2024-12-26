@@ -14,7 +14,7 @@ router.register(r'genres', GenreViewSet, basename='genre')
 router.register(r'titles', TitleViewSet, basename='title')
 
 urlpatterns = [
-    path('v1/auth/signup/', UserSignUpView.as_view()),  # {'post': 'create'})),
+    path('v1/auth/signup/', UserSignUpView.as_view()),
     path('v1/auth/token/', TokenView.as_view()),
     path('v1/users/me/', UserMeVeiw.as_view()),
     path('v1/', include([
@@ -30,10 +30,5 @@ urlpatterns = [
              name='comments-list'),
         path('titles/<int:title_id>/reviews/<int:review_id>/comments/<int:pk>/', CommentViewSet.as_view(
             {'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='comments-detail'),
-        # path('auth/', include('djoser.urls')),
-        # path('auth/', include('djoser.urls.jwt')),
     ])),
 ]
-
-
-

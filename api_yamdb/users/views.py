@@ -10,10 +10,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.decorators import action
 
 from api_yamdb.settings import DEFAULT_FROM_EMAIL
 from .serializers import UserSerializer, UserMeSerializer, SignUpSerializer, TokenSerialiser
 from api.permissions import IsAdminAndIsAuthenticated
+from rest_framework.exceptions import MethodNotAllowed 
 
 
 User = get_user_model()
@@ -24,20 +26,22 @@ class UserSignUpView(generics.GenericAPIView):  # viewsets.GenericViewSet, mixin
     serializer_class = SignUpSerializer
     permission_classes = (AllowAny,)
 
-    def post(self, reqest):
-        serailizer = self.get_serializer(data=reqest.data)
-        serailizer.is_valid()
-
-        user, _ = User.objects.get_or_create(
-            username=serailizer.data['username'],
-            defaults={'email': serailizer.data['email']}
+    def post(self, request):
+        serailizer = self.get_serializer(data=request.data)
+        serailizer.is_valid(raise_exception=True)
+        print('*' * 80, serailizer.is_valid(), '*' * 80)
+        print('*' * 80, serailizer.validated_data, '*' * 80)
+        user, created = User.objects.get_or_create(
+            username=serailizer.validated_data['username'],
+            defaults={'email': serailizer.validated_data['email']}
         )
         self.send_confirmation_code(user)
         return Response(
-            {
-                'username': user.username,
-                'email': user.email
-            },
+            serailizer.validated_data,
+            # {
+            #     'username': user.username,
+            #     'email': user.email
+            # },
             status=status.HTTP_200_OK
         )
 
@@ -58,20 +62,39 @@ class TokenView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = TokenSerialiser
 
-    def post(self, reqest):
-        try:
-            user = User.objects.get(username=reqest.data.get('username'))
-            if user.confirmation_code == reqest.data.get('confirmation_code'):
-                return Response(
-                    {
-                        'token': str(AccessToken.for_user(user))
-                    },
-                    status=status.HTTP_200_OK
-                )
-            else:
-                return Response({'error': 'Не верный код подтверждения.'}, status=status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
-            return Response({'error': 'Нет такого пользователя.'}, status=status.HTTP_404_NOT_FOUND)
+    def post(self, request):
+        # user = get_object_or_404(
+        #     User.objects.all(),
+        #     username=request.data.get('username')
+        # )
+        serailizer = self.get_serializer(data=request.data)
+        serailizer.is_valid(raise_exception=True)
+        user = get_object_or_404(
+            User.objects.all(),
+            username=serailizer.validated_data['username']
+        )
+        if user.confirmation_code == request.data.get('confirmation_code'):
+            return Response(
+                {
+                    'token': str(AccessToken.for_user(user))
+                },
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response({'error': 'Не верный код подтверждения.'}, status=status.HTTP_400_BAD_REQUEST)
+        # try:
+        #     user = User.objects.get(username=request.data.get('username'))
+        #     if user.confirmation_code == request.data.get('confirmation_code'):
+        #         return Response(
+        #             {
+        #                 'token': str(AccessToken.for_user(user))
+        #             },
+        #             status=status.HTTP_200_OK
+        #         )
+        #     else:
+        #         return Response({'error': 'Не верный код подтверждения.'}, status=status.HTTP_400_BAD_REQUEST)
+        # except User.DoesNotExist:
+        #     return Response({'error': 'Нет такого пользователя.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -82,9 +105,18 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['username']
     permission_classes = (IsAdminAndIsAuthenticated,)
 
+    def update(self, request, *args, **kwargs):
+        if request.method == 'PUT':
+            raise MethodNotAllowed('PUT')
+        return super().update(request, *args, **kwargs)
+    # def dispatch(self, request, *args, **kwargs):
+    #     if request.method == 'PUT':
+    #         raise MethodNotAllowed('PUT')
+    #     return super().dispatch(request, *args, **kwargs)
+
 
 class UserMeVeiw(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, )
     serializer_class = UserMeSerializer
 
     def get_user(self, request):

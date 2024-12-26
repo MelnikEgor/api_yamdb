@@ -1,9 +1,11 @@
 import csv
 import os
 
-from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
-from reviews.models import Category, Genre, Title, Review, Comment
+
+from reviews.models import Category, Genre, Title, Review, Comment, TitleGenre
+# from users.models import MyUser
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -26,7 +28,14 @@ class Command(BaseCommand):
                 reader = csv.DictReader(csvfile)
 
                 for row in reader:
-                    if 'users' in csv_file_path:
+                    if 'genre_title' in csv_file_path:
+                        title = Title.objects.get(id=row['title_id'])
+                        genre = Genre.objects.get(id=row['genre_id'])
+                        TitleGenre.objects.update_or_create(
+                            title=title,
+                            genre=genre,
+                        )
+                    elif 'users' in csv_file_path:
                         User.objects.update_or_create(
                             id=row['id'],
                             defaults={
@@ -66,7 +75,7 @@ class Command(BaseCommand):
                             }
                         )
                     elif 'review' in csv_file_path:
-                        user = User.objects.get(id=row['author_id'])
+                        user = User.objects.get(id=row['author'])
                         Review.objects.create(
                             id=row['id'],
                             title_id=row['title_id'],
@@ -77,7 +86,7 @@ class Command(BaseCommand):
                         )
                     elif 'comments' in csv_file_path:
                         review = Review.objects.get(id=row['review_id'])
-                        user = User.objects.get(id=row['author_id'])
+                        user = User.objects.get(id=row['author'])
                         Comment.objects.create(
                             id=row['id'],
                             text=row['text'],

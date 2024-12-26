@@ -7,66 +7,55 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-# from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend
 from reviews.models import Category, Genre, Title, TitleGenre, Review, Comment
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           ReviewSerializer, CommentSerializer)
-from .permissions import IsAdminOrReadOnly, IsAdminOrModerOrReadOnly, IsAdminAndIsAuthenticated
+from .permissions import IsAdminOrReadOnly, IsAdminOrModerOrReadOnly
 
 from django.contrib.auth import get_user_model
 from rest_framework import filters, mixins, viewsets
 
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import MethodNotAllowed
 
 
 User = get_user_model()
 
 
-# class BaseModelViewSet(viewsets.ModelViewSet):
-#     filter_backends = []
-#     search_fields = []
-#     permission_classes = []
-
-#     def get_permissions(self):
-#         if self.action in ['list', 'retrieve']:
-#             return [AllowAny()]
-#         return [IsAdminUser()]
-
-
-class CategoryViewSet(CreateModelMixin, ListModelMixin,
-                      DestroyModelMixin, GenericViewSet):
-
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+class BaseModelViewSet(CreateModelMixin, ListModelMixin,
+                       DestroyModelMixin, GenericViewSet):
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'slug'
 
 
-class GenreViewSet(CreateModelMixin, ListModelMixin,
-                   DestroyModelMixin, GenericViewSet):
+class CategoryViewSet(BaseModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    # filter_backends = (SearchFilter,)
+    # search_fields = ('name',)
+    # permission_classes = [IsAdminOrReadOnly]
+    # lookup_field = 'slug'
+
+
+class GenreViewSet(BaseModelViewSet):
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    filter_backends = (SearchFilter,)
-    search_fields = ('name',)
-    permission_classes = (IsAdminOrReadOnly,)
-    lookup_field = 'slug'
-
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valide()
-    #     super().create(serializer, *args, **kwargs)
-    #     return (Response(serializer.data, status=status.HTTP_201_CREATED))
+    # filter_backends = (SearchFilter,)
+    # search_fields = ('name',)
+    # permission_classes = (IsAdminOrReadOnly,)
+    # lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.prefetch_related('genre', 'category').all()
     serializer_class = TitleSerializer
-    # filter_backends = [DjangoFilterBackend]
-    # filterset_fields = ['category__slug', 'genre__slug', 'name', 'year']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['category__slug', 'genre__slug', 'name', 'year']
     permission_classes = [IsAdminOrReadOnly]
 
     def perform_create(self, serializer):
@@ -97,10 +86,17 @@ class TitleViewSet(viewsets.ModelViewSet):
             TitleGenre.objects.create(title=title, genre=genre)
 
     def update(self, request, *args, **kwargs):
+        if request.method == 'PUT':
+            raise MethodNotAllowed('PUT')
+
         instance = self.get_object()
         serializer = self.get_serializer(
-            instance, data=request.data, partial=True)
-
+            data=request.data, partial=False)
+        
+        print('*'*60, serializer.is_valid(), '*'*60)
+        # print('*'*60, serializer.data, '*'*60)
+        print('*'*60, serializer, '*'*60)
+        
         if serializer.is_valid():
             self.perform_update(serializer)
             return Response(serializer.data)
