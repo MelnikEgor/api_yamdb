@@ -3,45 +3,50 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, viewsets, status, mixins, generics
-# from rest_framework.permissions import IsAdminUser, AllowAny
-# from rest_framework.exceptions import ValidationError
-from rest_framework.views import APIView
+from rest_framework import filters, generics, status, viewsets
+from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.decorators import action
+from rest_framework.views import APIView
 
-from api_yamdb.settings import DEFAULT_FROM_EMAIL
-from .serializers import UserSerializer, UserMeSerializer, SignUpSerializer, TokenSerialiser
+from .serializers import (
+    UserSerializer, UserMeSerializer, SignUpSerializer, TokenSerialiser
+)
 from api.permissions import IsAdminAndIsAuthenticated
-from rest_framework.exceptions import MethodNotAllowed 
+from api_yamdb.settings import DEFAULT_FROM_EMAIL
 
 
 User = get_user_model()
 
 
-class UserSignUpView(generics.GenericAPIView):  # viewsets.GenericViewSet, mixins.CreateModelMixin):
+class UserSignUpView(generics.GenericAPIView):
+    """Представление регистрации и получения кода подтверждения."""
+
     queryset = User.objects.all()
     serializer_class = SignUpSerializer
-    permission_classes = (AllowAny,)
 
     def post(self, request):
-        serailizer = self.get_serializer(data=request.data)
-        serailizer.is_valid(raise_exception=True)
-        print('*' * 80, serailizer.is_valid(), '*' * 80)
-        print('*' * 80, serailizer.validated_data, '*' * 80)
-        user, created = User.objects.get_or_create(
-            username=serailizer.validated_data['username'],
-            defaults={'email': serailizer.validated_data['email']}
-        )
+        try:
+            user = User.objects.get(username=request.data.get('username'))
+        except Exception:
+            serailizer = self.get_serializer(data=request.data)
+            serailizer.is_valid(raise_exception=True)
+            user = User.objects.create(**serailizer.validated_data)
+        else:
+            if user.email != request.data.get('email'):
+                return Response(
+                    {
+                        'error': 'Электронная почта указана не верно.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         self.send_confirmation_code(user)
         return Response(
-            serailizer.validated_data,
-            # {
-            #     'username': user.username,
-            #     'email': user.email
-            # },
+            {
+                'username': user.username,
+                'email': user.email
+            },
             status=status.HTTP_200_OK
         )
 
@@ -59,14 +64,11 @@ class UserSignUpView(generics.GenericAPIView):  # viewsets.GenericViewSet, mixin
 
 
 class TokenView(generics.GenericAPIView):
-    permission_classes = (AllowAny,)
+    """Представление получения токена для аутентификации."""
+
     serializer_class = TokenSerialiser
 
     def post(self, request):
-        # user = get_object_or_404(
-        #     User.objects.all(),
-        #     username=request.data.get('username')
-        # )
         serailizer = self.get_serializer(data=request.data)
         serailizer.is_valid(raise_exception=True)
         user = get_object_or_404(
@@ -81,23 +83,17 @@ class TokenView(generics.GenericAPIView):
                 status=status.HTTP_200_OK
             )
         else:
-            return Response({'error': 'Не верный код подтверждения.'}, status=status.HTTP_400_BAD_REQUEST)
-        # try:
-        #     user = User.objects.get(username=request.data.get('username'))
-        #     if user.confirmation_code == request.data.get('confirmation_code'):
-        #         return Response(
-        #             {
-        #                 'token': str(AccessToken.for_user(user))
-        #             },
-        #             status=status.HTTP_200_OK
-        #         )
-        #     else:
-        #         return Response({'error': 'Не верный код подтверждения.'}, status=status.HTTP_400_BAD_REQUEST)
-        # except User.DoesNotExist:
-        #     return Response({'error': 'Нет такого пользователя.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    'error': 'Не верный код подтверждения.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """Представление вдминистратора для управления пользователей."""
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
@@ -109,13 +105,11 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'PUT':
             raise MethodNotAllowed('PUT')
         return super().update(request, *args, **kwargs)
-    # def dispatch(self, request, *args, **kwargs):
-    #     if request.method == 'PUT':
-    #         raise MethodNotAllowed('PUT')
-    #     return super().dispatch(request, *args, **kwargs)
 
 
 class UserMeVeiw(APIView):
+    """Представление получения и изменение информации пользователем о себе."""
+
     permission_classes = (IsAuthenticated, )
     serializer_class = UserMeSerializer
 

@@ -87,7 +87,7 @@ class TitleSerializer(serializers.ModelSerializer):
             }
 
         # Преобразование genre
-        genres = instance.genre.all()
+        genres = instance.genre.all().distinct()
         representation['genre'] = [
             {'name': genre.name, 'slug': genre.slug} for genre in genres
         ]

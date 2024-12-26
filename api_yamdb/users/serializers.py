@@ -35,19 +35,18 @@ class TokenSerialiser(serializers.ModelSerializer):
 
 
 class SignUpSerializer(serializers.ModelSerializer):
-    # email = serializers.EmailField()
-    username = serializers.RegexField(PATERN_USER, max_length=50)
+    # email = serializers.EmailField(max_length=254, validators=[UniqueValidator(queryset=User.objects.all())])
+    username = serializers.RegexField(PATERN_USER, max_length=50)  # , validators=[UniqueValidator(queryset=User.objects.all())])
 
     class Meta:
         model = User
         fields = ('username', 'email',)
-        validators = [
-            UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=('username', 'email'),
-                # message='У вас уже имеется подписка на данного пользователя.'
-            )
-        ]
+        # validators = [
+        #     UniqueTogetherValidator(
+        #         queryset=User.objects.all(),
+        #         fields=('username', 'email'),
+        #     )
+        # ]
 
     def validate_username(self, value):
         if value == 'me':
@@ -115,17 +114,17 @@ class UserSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def create(self, validated_data):
-        user = User.objects.create(**validated_data)
-        if user.role == 'admin':
-            user.is_staff = True
-            user.save()
-        #     username=validated_data['username'],
-        #     email=validated_data['email'],
-        #     role=validated_data['role'] if validated_data['role'],
-        #     is_staff=True if validated_data['role'] == 'admin' else False
-        # )
-        return user
+    # def create(self, validated_data):
+    #     user = User.objects.create(**validated_data)
+    #     if user.role == 'admin':
+    #         user.is_staff = True
+    #         user.save()
+    #     #     username=validated_data['username'],
+    #     #     email=validated_data['email'],
+    #     #     role=validated_data['role'] if validated_data['role'],
+    #     #     is_staff=True if validated_data['role'] == 'admin' else False
+    #     # )
+    #     return user
 
     # def create(self, validated_data):
     #     print(self.request.data)
