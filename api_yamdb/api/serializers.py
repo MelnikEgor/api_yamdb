@@ -11,6 +11,7 @@ from api_yamdb.settings import PATERN
 
 User = get_user_model()
 
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -71,7 +72,7 @@ class TitleSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         if obj.rating is not None:
             return round(obj.rating, 2)
-        return 0
+        return None
 
     def to_representation(self, instance):
         """Переопределяем вывод данных."""
@@ -85,8 +86,7 @@ class TitleSerializer(serializers.ModelSerializer):
                 'slug': category.slug
             }
 
-        # Преобразование genre
-        genres = instance.genre.all()
+        genres = instance.genre.all().distinct()
         representation['genre'] = [
             {'name': genre.name, 'slug': genre.slug} for genre in genres
         ]

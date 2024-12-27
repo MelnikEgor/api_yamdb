@@ -52,6 +52,9 @@ class TitleGenre(models.Model):
 
     def __str__(self):
         return f"{self.title.name} - {self.genre.name}"
+    
+    class Meta:
+        unique_together = ('title', 'genre')
 
  
 class Review(models.Model):
@@ -61,6 +64,9 @@ class Review(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     score = models.IntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['author', 'pub_date']
 
 
 class Comment(models.Model):
