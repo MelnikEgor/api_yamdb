@@ -1,6 +1,5 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
 from rest_framework import permissions
-from rest_framework.exceptions import MethodNotAllowed 
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class IsAdminOrReadOnly(BasePermission):
@@ -11,15 +10,6 @@ class IsAdminOrReadOnly(BasePermission):
                 and (request.user.role == 'admin' or request.user.is_staff)
             )
         return True
-
-        # if request.method in SAFE_METHODS:
-        #     return True
-        # return request.user and request.user.is_staff
-    
-        # return (
-        #     request.method in SAFE_METHODS
-        #     or (request.user and request.user.is_authenticated)
-        # )
 
 
 class IsAdminAndIsAuthenticated(BasePermission):

@@ -1,12 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from rest_framework import serializers
+from django.db.models import Avg
 
 # from rest_framework.relations import SlugRelatedField
 # from rest_framework.validators import UniqueTogetherValidator
 
-from reviews.models import Category, Genre, Title, Review, Comment
 from api_yamdb.settings import PATERN
+from reviews.models import Category, Comment, Genre, Review, Title 
 
 
 User = get_user_model()
@@ -50,20 +51,27 @@ class TitleSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         ]
 
-    def update(self, instance, validated_data):
-        category_data = validated_data.pop('category', None)
-        genre_data = validated_data.pop('genre', None)
+    # def update(self, instance, validated_data):
+    #     # if not validated_data.get('year'):
+    #     #     raise serializers.ValidationError(
+    #     #         "Поле year обязательно для заполнения.")
 
-        if category_data is not None:
-            instance.category = Category.objects.get(pk=category_data['id'])
-        if genre_data is not None:
-            genre_ids = [genre['id'] for genre in genre_data]
-            instance.genre.set(genre_ids)
+    #     category_data = validated_data.pop('category', None)
+    #     genre_data = validated_data.pop('genre', None)
 
-        instance.save()
-        return instance
+    #     if category_data is not None:
+    #         instance.category = Category.objects.get(pk=category_data['id'])
+    #     if genre_data is not None:
+    #         genre_ids = [genre['id'] for genre in genre_data]
+    #         instance.genre.set(genre_ids)
+
+    #     instance.save()
+    #     return instance
 
     def validate_year(self, value):
+        # if not value:
+        #     raise serializers.ValidationError(
+        #         "Поле year обязательно для заполнения.")
         current_year = now().year
         if value > current_year:
             raise serializers.ValidationError()
@@ -72,7 +80,7 @@ class TitleSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         if obj.rating is not None:
             return round(obj.rating, 2)
-        return 0
+        return None
 
     def to_representation(self, instance):
         """Переопределяем вывод данных."""
@@ -130,56 +138,3 @@ class CommentSerializer(serializers.ModelSerializer):
     #     model = Title
     #     fields = ('id', 'name', 'year', 'description', 'category', 'genre')
 
-
-# class UserSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = User
-#         fields = (
-#             'username',
-#             'email',
-#             'first_name',
-#             'last_name',
-#             'bio',
-#             'role',
-#         )
-
-#     def validate_username(self, value):
-#         if value != 'me':
-#             return value
-#         raise serializers.ValidationError(
-#             "Имя пользователя не должно быть 'me'"
-#         )
-
-#     def create(self, validated_data):
-#         user = User.objects.create(
-#             username=self.validated_data['username'],
-#             email=self.validated_data['email'],
-#             role=self.validated_data['role'],
-#             is_staff=True if validated_data['role'] == 'admin' else False
-#         )
-#         return user
-
-
-#     # def create(self, validated_data):
-#     #     print(self.request.data)
-#     #     # serializer = UserSerializer(data=request.data)
-#     #     if self.request.data['username'] != 'me':
-#     #         return User.objects.create(**validated_data)
-#     #         # return super().create(request)
-#     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class UserMeSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = User
-#         fields = (
-#             'username',
-#             'email',
-#             'first_name',
-#             'last_name',
-#             'bio',
-#             'role'
-#         )
-#         read_only_fields = ('role',)

@@ -7,8 +7,8 @@ from rest_framework import filters, generics, status, viewsets
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
 
 from .serializers import (
     UserSerializer, UserMeSerializer, SignUpSerializer, TokenSerialiser
@@ -29,10 +29,10 @@ class UserSignUpView(generics.GenericAPIView):
     def post(self, request):
         try:
             user = User.objects.get(username=request.data.get('username'))
-        except Exception:
-            serailizer = self.get_serializer(data=request.data)
-            serailizer.is_valid(raise_exception=True)
-            user = User.objects.create(**serailizer.validated_data)
+        except User.DoesNotExist:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = User.objects.create(**serializer.validated_data)
         else:
             if user.email != request.data.get('email'):
                 return Response(
@@ -69,11 +69,11 @@ class TokenView(generics.GenericAPIView):
     serializer_class = TokenSerialiser
 
     def post(self, request):
-        serailizer = self.get_serializer(data=request.data)
-        serailizer.is_valid(raise_exception=True)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
             User.objects.all(),
-            username=serailizer.validated_data['username']
+            username=serializer.validated_data['username']
         )
         if user.confirmation_code == request.data.get('confirmation_code'):
             return Response(
@@ -126,7 +126,6 @@ class UserMeVeiw(APIView):
             data=request.data,
             partial=True
         )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -71,3 +71,10 @@ class UserMeSerializer(serializers.ModelSerializer):
             'role'
         )
         read_only_fields = ('role',)
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                "Имя пользователя не должно быть 'me'"
+            )
+        return value
