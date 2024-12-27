@@ -70,6 +70,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
     def perform_create(self, serializer):
+        # genres_data = self.request.data.get('genre')
         category_data = self.request.data.get('category')
 
         # Проверка существования категории
@@ -80,6 +81,21 @@ class TitleViewSet(viewsets.ModelViewSet):
                 {'category': 'Указанная категория не существует.'})
 
         serializer.save(category=category)
+        # Проверка существования жанров
+        # genres = []
+        # for genre_slug in genres_data:
+        #     try:
+        #         genre = Genre.objects.get(slug=genre_slug)
+        #         genres.append(genre)
+        #     except Genre.DoesNotExist:
+        #         raise ValidationError(
+        #             {'genre': f'Жанр {genre_slug} не существует.'})
+
+        # title = serializer.save(category=category)
+
+        # Сохранение жанров через промежуточную таблицу
+        # for genre in genres:
+        #     TitleGenre.objects.create(title=title, genre=genre)
 
     def update(self, request, *args, **kwargs):
         if request.method == 'PUT':
