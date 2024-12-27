@@ -50,13 +50,13 @@ class TitleGenre(models.Model):
         Genre, on_delete=models.SET_NULL, null=True,
         related_name="genre_titles")
 
-    def __str__(self):
-        return f"{self.title.name} - {self.genre.name}"
-    
     class Meta:
         unique_together = ('title', 'genre')
 
- 
+    def __str__(self):
+        return f"{self.title.name} - {self.genre.name}"
+
+
 class Review(models.Model):
     title = models.ForeignKey(Title, on_delete=models.CASCADE,
                               related_name='reviews')
@@ -66,7 +66,12 @@ class Review(models.Model):
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ['author', 'pub_date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_review_per_user_per_title'  # Уникальное имя ограничения
+            )
+        ]
 
 
 class Comment(models.Model):

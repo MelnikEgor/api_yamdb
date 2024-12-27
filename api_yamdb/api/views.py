@@ -20,19 +20,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import MethodNotAllowed
 
+from .filters import TitleFilter
+
 
 User = get_user_model()
-
-from django_filters import rest_framework as filters
-
-
-class TitleFilter(filters.FilterSet):
-    genre = filters.CharFilter(field_name='genre__slug', lookup_expr='icontains')  # Фильтр по slug жанра
-    category = filters.CharFilter(field_name='category__slug', lookup_expr='icontains')  # Фильтр по slug категории
-
-    class Meta:
-        model = Title
-        fields = ['genre', 'category', 'name', 'year']
 
 
 class BaseModelViewSet(CreateModelMixin, ListModelMixin,
@@ -66,7 +57,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['category__slug', 'genre__slug', 'name', 'year']
+    filterset_class = TitleFilter
     permission_classes = [IsAdminOrReadOnly]
 
     def perform_create(self, serializer):
@@ -104,11 +95,11 @@ class TitleViewSet(viewsets.ModelViewSet):
         # instance = self.get_object()
         serializer = self.get_serializer(
             data=request.data, partial=True)
-        
+
         print('*'*60, serializer.is_valid(), '*'*60)
         # print('*'*60, serializer.data, '*'*60)
         print('*'*60, serializer, '*'*60)
-        
+
         if serializer.is_valid():
             self.perform_update(serializer)
             return Response(serializer.data)
@@ -130,8 +121,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title = get_object_or_404(Title, id=title_id)
         author = self.request.user
 
-        # if Review.objects.filter(title=title, author=author).exists():
-        #     raise ValidationError('Вы уже оставили отзыв на это произведение.')
+        if Review.objects.filter(title=title, author=author).exists():
+            raise ValidationError('Вы уже оставили отзыв на это произведение.')
 
         serializer.save(author=author, title=title)
 
