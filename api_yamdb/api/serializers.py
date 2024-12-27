@@ -1,13 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from rest_framework import serializers
-from django.db.models import Avg
 
-# from rest_framework.relations import SlugRelatedField
-# from rest_framework.validators import UniqueTogetherValidator
-
-from api_yamdb.settings import PATERN
-from reviews.models import Category, Comment, Genre, Review, Title 
+from reviews.models import Category, Comment, Genre, Review, Title
 
 
 User = get_user_model()
@@ -34,8 +29,6 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    # category = CategorySerializer()
-    # genre = GenreSerializer(many=True)
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(), slug_field='slug', write_only=True
     )
@@ -51,27 +44,7 @@ class TitleSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         ]
 
-    # def update(self, instance, validated_data):
-    #     # if not validated_data.get('year'):
-    #     #     raise serializers.ValidationError(
-    #     #         "Поле year обязательно для заполнения.")
-
-    #     category_data = validated_data.pop('category', None)
-    #     genre_data = validated_data.pop('genre', None)
-
-    #     if category_data is not None:
-    #         instance.category = Category.objects.get(pk=category_data['id'])
-    #     if genre_data is not None:
-    #         genre_ids = [genre['id'] for genre in genre_data]
-    #         instance.genre.set(genre_ids)
-
-    #     instance.save()
-    #     return instance
-
     def validate_year(self, value):
-        # if not value:
-        #     raise serializers.ValidationError(
-        #         "Поле year обязательно для заполнения.")
         current_year = now().year
         if value > current_year:
             raise serializers.ValidationError()
@@ -126,15 +99,3 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
         read_only_fields = ('author', 'review', 'pub_date')
-
-    # category = CategorySerializer(read_only=True)
-    # genre = serializers.SlugRelatedField(
-    #     many=True,
-    #     queryset=Genre.objects.all(),
-    #     slug_field='slug'
-    # )
-
-    # class Meta:
-    #     model = Title
-    #     fields = ('id', 'name', 'year', 'description', 'category', 'genre')
-
