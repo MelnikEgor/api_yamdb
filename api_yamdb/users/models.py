@@ -12,7 +12,6 @@ ROLE = (
 class MyUser(AbstractUser):
     """Кастомная модель пользователя."""
 
-<<<<<<< HEAD
     password = models.CharField(
         'Пароль',
         max_length=128,
@@ -22,10 +21,6 @@ class MyUser(AbstractUser):
         'Электронная почта',
         unique=True
     )
-=======
-    password = models.CharField('Пароль', max_length=128, blank=True)
-    email = models.EmailField('Электронная почта', unique=True)
->>>>>>> 05e719bfb829ef2e4daff00b46813ed3e2262576
     username = models.CharField(
         'Имя пользователя',
         max_length=128,
