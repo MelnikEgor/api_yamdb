@@ -107,10 +107,11 @@
 import csv
 import os
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
-from reviews.models import Category, Genre, Title, Review, Comment, TitleGenre
-from django.contrib.auth import get_user_model
+from reviews.models import Category, Comment, Genre, Review, Title, TitleGenre
+
 
 User = get_user_model()
 
@@ -136,7 +137,8 @@ class Command(BaseCommand):
                     self.process_row(csv_file_path, row)
 
                 self.stdout.write(self.style.SUCCESS(
-                    f'Успешно импортировано {reader.line_num} записей из {csv_file_path}'))
+                    f'Успешно импортировано {reader.line_num}'
+                    f' записей из {csv_file_path}'))
 
         except Exception as e:
             raise CommandError(f'Ошибка при импорте данных: {e}')

@@ -1,13 +1,12 @@
-from django.db import models
 from django.contrib.auth import get_user_model
-from django.db.models import Avg
+from django.db import models
 
 
 User = get_user_model()
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=256, verbose_name="Категория")
+    name = models.CharField('Категория', max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
 
     def __str__(self):
@@ -15,7 +14,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=256, verbose_name="Жанр")
+    name = models.CharField('Жанр', max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
 
     def __str__(self):
@@ -23,20 +22,24 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(
-        max_length=256, verbose_name="Название произведения")
-    year = models.IntegerField(blank=False, null=False)
-    description = models.TextField(
-        blank=True, null=True, verbose_name="Описание")
-    genre = models.ManyToManyField(Genre, through="TitleGenre",
-                                   related_name="titles")
+    name = models.CharField('Название произведения', max_length=256)
+    year = models.IntegerField('Год')
+    description = models.TextField('Описание', blank=True, null=True)
+    genre = models.ManyToManyField(
+        Genre,
+        through='TitleGenre',
+        related_name='titles'
+    )
     category = models.ForeignKey(
-        Category, related_name="titles", on_delete=models.SET_NULL, null=True
+        Category,
+        related_name='titles',
+        on_delete=models.SET_NULL,
+        null=True
     )
 
     @property
     def rating(self):
-        return self.reviews.aggregate(Avg('score'))['score__avg']
+        return self.reviews.aggregate(models.Avg('score'))['score__avg']
 
     def __str__(self):
         return self.name
@@ -44,17 +47,14 @@ class Title(models.Model):
 
 class TitleGenre(models.Model):
     title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, related_name="title_genres"
+        Title, on_delete=models.CASCADE, related_name='title_genres'
     )
     genre = models.ForeignKey(
         Genre, on_delete=models.SET_NULL, null=True,
-        related_name="genre_titles")
-
-    class Meta:
-        unique_together = ('title', 'genre')
+        related_name='genre_titles')
 
     def __str__(self):
-        return f"{self.title.name} - {self.genre.name}"
+        return f'{self.title.name} - {self.genre.name}'
 
 
 class Review(models.Model):
@@ -69,8 +69,8 @@ class Review(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
-                name='один отзыв на 1 произведение'
-            )
+                name='unique_review',
+            ),
         ]
 
 
