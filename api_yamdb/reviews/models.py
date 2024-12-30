@@ -25,7 +25,7 @@ class Genre(models.Model):
 class Title(models.Model):
     name = models.CharField(
         max_length=256, verbose_name="Название произведения")
-    year = models.IntegerField(verbose_name="Год")
+    year = models.IntegerField(blank=False, null=False)
     description = models.TextField(
         blank=True, null=True, verbose_name="Описание")
     genre = models.ManyToManyField(Genre, through="TitleGenre",
@@ -69,7 +69,7 @@ class Review(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
-                name='unique_review_per_user_per_title'  # Уникальное имя ограничения
+                name='один отзыв на 1 произведение'
             )
         ]
 

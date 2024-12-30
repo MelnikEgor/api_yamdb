@@ -33,8 +33,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    # category = CategorySerializer()
-    # genre = GenreSerializer(many=True)
+
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(), slug_field='slug', write_only=True
     )
@@ -51,6 +50,11 @@ class TitleSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
+
+        if not validated_data.get('year'):
+            raise serializers.ValidationError(
+                "Поле year обязательно для заполнения.")
+
         category_data = validated_data.pop('category', None)
         genre_data = validated_data.pop('genre', None)
 
@@ -64,6 +68,9 @@ class TitleSerializer(serializers.ModelSerializer):
         return instance
 
     def validate_year(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "Поле year обязательно для заполнения.")
         current_year = now().year
         if value > current_year:
             raise serializers.ValidationError()
