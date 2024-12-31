@@ -45,6 +45,9 @@ class TitleSerializer(serializers.ModelSerializer):
         ]
 
     def validate_year(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "Поле year обязательно для заполнения.")
         current_year = now().year
         if value > current_year:
             raise serializers.ValidationError()
