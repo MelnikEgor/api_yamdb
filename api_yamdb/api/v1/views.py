@@ -1,14 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
-from rest_framework.exceptions import MethodNotAllowed, ValidationError
+from rest_framework import viewsets, mixins
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
-from rest_framework.mixins import (
-    CreateModelMixin,
-    ListModelMixin,
-    DestroyModelMixin
-)
 
 from .filters import TitleFilter
 from .permissions import IsAdminOrModerOrReadOnly, IsAdminOrReadOnly
@@ -19,6 +14,7 @@ from .serializers import (
     ReviewSerializer,
     CommentSerializer
 )
+from api_yamdb.mixins import CastomUpdateModelMixin
 from reviews.models import Category, Comment, Genre, Review, Title
 
 
@@ -26,9 +22,9 @@ User = get_user_model()
 
 
 class BaseModelViewSet(
-    CreateModelMixin,
-    ListModelMixin,
-    DestroyModelMixin,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
     filter_backends = (SearchFilter,)
@@ -47,20 +43,29 @@ class GenreViewSet(BaseModelViewSet):
     serializer_class = GenreSerializer
 
 
-class TitleViewSet(viewsets.ModelViewSet):
+class TitleViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.RetrieveModelMixin,
+    CastomUpdateModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
     permission_classes = [IsAdminOrReadOnly]
 
-    def update(self, request, *args, **kwargs):
-        if request.method == 'PUT':
-            raise MethodNotAllowed('PUT')
-        return super().update(request, *args, **kwargs)
 
-
-class ReviewViewSet(viewsets.ModelViewSet):
+class ReviewViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.RetrieveModelMixin,
+    CastomUpdateModelMixin,
+    viewsets.GenericViewSet
+):
     serializer_class = ReviewSerializer
     permission_classes = [IsAdminOrModerOrReadOnly]
 
@@ -76,13 +81,15 @@ class ReviewViewSet(viewsets.ModelViewSet):
             raise ValidationError('Вы уже оставили отзыв на это произведение.')
         serializer.save(author=author, title=title)
 
-    def update(self, request, *args, **kwargs):
-        if request.method == 'PUT':
-            raise MethodNotAllowed('PUT')
-        return super().update(request, *args, **kwargs)
 
-
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.RetrieveModelMixin,
+    CastomUpdateModelMixin,
+    viewsets.GenericViewSet
+):
     serializer_class = CommentSerializer
     permission_classes = [IsAdminOrModerOrReadOnly]
 

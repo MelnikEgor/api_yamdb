@@ -13,9 +13,9 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ('name', 'slug')
 
-    def create(self, validated_data):
-        category = Category.objects.create(**validated_data)
-        return category
+    # def create(self, validated_data):
+    #     category = Category.objects.create(**validated_data)
+    #     return category
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -23,9 +23,9 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
         fields = ('name', 'slug')
 
-    def create(self, validated_data):
-        genre = Genre.objects.create(**validated_data)
-        return genre
+    # def create(self, validated_data):
+    #     genre = Genre.objects.create(**validated_data)
+    #     return genre
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -82,7 +82,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-        read_only_fields = ('author',)
+        # read_only_fields = ('author',)
 
     def validate_score(self, value):
         if not (1 <= value <= 10):
@@ -98,4 +98,4 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
-        read_only_fields = ('author', 'review', 'pub_date')
+        read_only_fields = ('review', 'pub_date')

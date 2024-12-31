@@ -41,3 +41,15 @@ class MyUser(AbstractUser):
         max_length=255,
         null=True
     )
+
+    # class Meta:
+    #     verbose_name = 'пользователь'
+    #     verbose_name_plural = 'Пользователи'
+
+    # def __str__(self):
+    #     return f'{self.username}'
+
+    # def clean_username(self):
+    #     username = self.cleaned_data['username']
+
+    #     return username
