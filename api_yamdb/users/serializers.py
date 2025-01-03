@@ -55,26 +55,3 @@ class UserSerializer(serializers.ModelSerializer):
                 f"Имя пользователя не должно быть '{value}'"
             )
         return value
-
-
-class UserMeSerializer(serializers.ModelSerializer):
-    username = serializers.RegexField(PATERN_USER, max_length=50)
-
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role'
-        )
-        read_only_fields = ('role',)
-
-    def validate_username(self, value):
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                f"Имя пользователя не должно быть '{value}'"
-            )
-        return value

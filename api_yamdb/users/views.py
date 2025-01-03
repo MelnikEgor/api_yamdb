@@ -103,7 +103,7 @@ class UserViewSet(
             return Response(serializer.data)
         if request.method == 'PATCH':
             serializer = UserSerializer(
-                get_object_or_404(User.objects.all(), username=request.user),
+                get_object_or_404(User.objects.all(), email=request.user),
                 data=request.data,
                 partial=True
             )
