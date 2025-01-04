@@ -24,9 +24,9 @@ class SignUpSerializer(serializers.ModelSerializer):
         fields = ('username', 'email',)
 
     def validate_username(self, value):
-        if value == 'me':
+        if value.lower() == 'me':
             raise serializers.ValidationError(
-                "Имя пользователя не должно быть 'me'"
+                f"Имя пользователя не должно быть '{value}'"
             )
         return value
 
@@ -50,9 +50,9 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def validate_username(self, value):
-        if value == 'me':
+        if value.lower() == 'me':
             raise serializers.ValidationError(
-                "Имя пользователя не должно быть 'me'"
+                f"Имя пользователя не должно быть '{value}'"
             )
         return value
 
@@ -73,8 +73,8 @@ class UserMeSerializer(serializers.ModelSerializer):
         read_only_fields = ('role',)
 
     def validate_username(self, value):
-        if value == 'me':
+        if value.lower() == 'me':
             raise serializers.ValidationError(
-                "Имя пользователя не должно быть 'me'"
+                f"Имя пользователя не должно быть '{value}'"
             )
         return value

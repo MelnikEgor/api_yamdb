@@ -1,36 +1,32 @@
-import uuid
-
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, generics, status, viewsets
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework import filters, status, viewsets, mixins
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .serializers import (
-    UserSerializer, UserMeSerializer, SignUpSerializer, TokenSerialiser
+    UserSerializer, SignUpSerializer, TokenSerialiser
 )
-from api.permissions import IsAdminAndIsAuthenticated
-from api_yamdb.settings import DEFAULT_FROM_EMAIL
+from .utils import send_confirmation_code
+from api.v1.permissions import IsAdminAndIsAuthenticated
+from api_yamdb.mixins import CastomUpdateModelMixin
 
 
 User = get_user_model()
 
 
-class UserSignUpView(generics.GenericAPIView):
+class UserSignUpView(APIView):
     """Представление регистрации и получения кода подтверждения."""
 
-    queryset = User.objects.all()
-    serializer_class = SignUpSerializer
-
     def post(self, request):
+        serializer = SignUpSerializer(data=request.data)
         try:
             user = User.objects.get(username=request.data.get('username'))
         except User.DoesNotExist:
-            serializer = self.get_serializer(data=request.data)
+            # serializer = SignUpSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = User.objects.create(**serializer.validated_data)
         else:
@@ -41,35 +37,22 @@ class UserSignUpView(generics.GenericAPIView):
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        self.send_confirmation_code(user)
+        send_confirmation_code(user)
         return Response(
-            {
-                'username': user.username,
-                'email': user.email
-            },
+            serializer.initial_data,
+            # {
+            #     'username': user.username,
+            #     'email': user.email
+            # },
             status=status.HTTP_200_OK
         )
 
-    def send_confirmation_code(self, user):
-        confirmation_code = uuid.uuid5(uuid.NAMESPACE_DNS, user.username)
-        user.confirmation_code = confirmation_code
-        user.save()
-        send_mail(
-            subject='Код подтверждения',
-            message=f'Ваш код подтверждения: {confirmation_code}.',
-            from_email=DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
 
-
-class TokenView(generics.GenericAPIView):
+class TokenView(APIView):
     """Представление получения токена для аутентификации."""
 
-    serializer_class = TokenSerialiser
-
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+        serializer = TokenSerialiser(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
             User.objects.all(),
@@ -91,8 +74,15 @@ class TokenView(generics.GenericAPIView):
             )
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    """Представление вдминистратора для управления пользователей."""
+class UserViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.RetrieveModelMixin,
+    CastomUpdateModelMixin,
+    viewsets.GenericViewSet
+):
+    """Представление администратора для управления пользователей."""
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -101,31 +91,22 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['username']
     permission_classes = (IsAdminAndIsAuthenticated,)
 
-    def update(self, request, *args, **kwargs):
-        if request.method == 'PUT':
-            raise MethodNotAllowed('PUT')
-        return super().update(request, *args, **kwargs)
-
-
-class UserMeVeiw(APIView):
-    """Представление получения и изменение информации пользователем о себе."""
-
-    permission_classes = (IsAuthenticated, )
-    serializer_class = UserMeSerializer
-
-    def get_user(self, request):
-        return get_object_or_404(User.objects.all(), username=request.user)
-
-    def get(self, request):
-        serializer = UserMeSerializer(self.get_user(request))
-        return Response(serializer.data)
-
-    def patch(self, request):
-        serializer = UserMeSerializer(
-            self.get_user(request),
-            data=request.data,
-            partial=True
-        )
+    @action(
+        detail=False,
+        methods=['GET', 'PATCH'],
+        permission_classes=(IsAuthenticated, ),
+        url_path='me'
+    )
+    def me(self, request):
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data)
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                get_object_or_404(User.objects.all(), username=request.user),
+                data=request.data,
+                partial=True
+            )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
