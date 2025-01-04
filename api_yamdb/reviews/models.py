@@ -1,8 +1,12 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.timezone import now
 
 
 User = get_user_model()
+
+CATEGORY_NAME_LENGTH = 20
 
 
 class Category(models.Model):
@@ -10,7 +14,11 @@ class Category(models.Model):
     slug = models.SlugField(unique=True)
 
     def __str__(self):
-        return self.name
+        return (
+            self.name[:CATEGORY_NAME_LENGTH] + '...'
+            if len(self.name) > CATEGORY_NAME_LENGTH
+            else self.name
+        )
 
 
 class Genre(models.Model):
@@ -23,8 +31,8 @@ class Genre(models.Model):
 
 class Title(models.Model):
     name = models.CharField('Название произведения', max_length=256)
-    year = models.IntegerField('Год')
-    description = models.TextField('Описание', blank=True, null=True)
+    year = models.PositiveSmallIntegerField('Год')
+    description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(
         Genre,
         through='TitleGenre',
@@ -37,12 +45,19 @@ class Title(models.Model):
         null=True
     )
 
-    @property
-    def rating(self):
-        return self.reviews.aggregate(models.Avg('score'))['score__avg']
-
     def __str__(self):
         return self.name
+
+    def clean(self):
+        current_year = now().year
+        if self.year > current_year:
+            raise ValidationError({
+                'year': 'Год произведения не может быть больше текущего.'
+            })
+
+    # @property
+    # def rating(self):
+    #     return self.reviews.aggregate(models.Avg('score'))['score__avg']
 
 
 class TitleGenre(models.Model):

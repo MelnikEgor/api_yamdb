@@ -1,21 +1,24 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, mixins
+from rest_framework import mixins, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
+from rest_framework.response import Response
 
+from api_yamdb.mixins import CastomUpdateModelMixin
+from reviews.models import Category, Comment, Genre, Review, Title
 from .filters import TitleFilter
 from .permissions import IsAdminOrModerOrReadOnly, IsAdminOrReadOnly
 from .serializers import (
     CategorySerializer,
+    CommentSerializer,
     GenreSerializer,
-    TitleSerializer,
     ReviewSerializer,
-    CommentSerializer
+    TitleSerializer,
 )
-from api_yamdb.mixins import CastomUpdateModelMixin
-from reviews.models import Category, Comment, Genre, Review, Title
 
 
 User = get_user_model()
@@ -57,6 +60,14 @@ class TitleViewSet(
     filterset_class = TitleFilter
     permission_classes = [IsAdminOrReadOnly]
 
+    def retrieve(self, request, *args, **kwargs):
+        title = self.get_object()
+        serializer = self.get_serializer(title)
+        rating = title.reviews.aggregate(Avg('score'))['score__avg']
+        data = serializer.data
+        data['rating'] = rating
+        return Response(data)
+
 
 class ReviewViewSet(
     mixins.CreateModelMixin,
@@ -77,8 +88,6 @@ class ReviewViewSet(
         title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Title, id=title_id)
         author = self.request.user
-        if Review.objects.filter(title=title, author=author).exists():
-            raise ValidationError('Вы уже оставили отзыв на это произведение.')
         serializer.save(author=author, title=title)
 
 
