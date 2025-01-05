@@ -1,5 +1,4 @@
 from django.contrib import admin
-# from django.contrib.auth.admin import UserAdmin
 
 from .models import User
 
@@ -12,12 +11,5 @@ class UserAmin(admin.ModelAdmin):
         'first_name',
         'last_name',
         'is_staff',
-        'role',
-        'confirmation_code'
+        'role'
     )
-
-# UserAdmin.fieldsets += (
-#     ('Extra Fields', {'fields': ('bio', 'role',)}),
-# )
-
-# admin.site.register(MyUser, UserAdmin)

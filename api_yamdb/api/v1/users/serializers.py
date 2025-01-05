@@ -2,18 +2,22 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from api_yamdb.settings import PATERN_USER
+from api_yamdb.constants import PATERN_USER
 
 
 User = get_user_model()
 
 
-class TokenSerialiser(serializers.ModelSerializer):
-    username = serializers.RegexField(PATERN_USER, max_length=50)
+class TokenSerialiser(serializers.Serializer):
+    username = serializers.RegexField(PATERN_USER, max_length=150)
+    confirmation_code = serializers.CharField(max_length=255)
 
-    class Meta:
-        model = User
-        fields = ('username', 'confirmation_code',)
+    def validate_confirmation_code(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Код подтверждения не может быть пустым.'
+            )
+        return value
 
 
 class SignUpSerializer(serializers.ModelSerializer):

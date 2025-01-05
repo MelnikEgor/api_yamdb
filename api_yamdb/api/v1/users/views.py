@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets, mixins
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,8 +12,8 @@ from .serializers import (
     UserSerializer, SignUpSerializer, TokenSerialiser
 )
 from .utils import send_confirmation_code
+from api.v1.mixins import CastomUpdateModelMixin
 from api.v1.permissions import IsAdminAndIsAuthenticated
-from api_yamdb.mixins import CastomUpdateModelMixin
 
 
 User = get_user_model()
@@ -26,7 +27,6 @@ class UserSignUpView(APIView):
         try:
             user = User.objects.get(username=request.data.get('username'))
         except User.DoesNotExist:
-            # serializer = SignUpSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = User.objects.create(**serializer.validated_data)
         else:
@@ -40,10 +40,6 @@ class UserSignUpView(APIView):
         send_confirmation_code(user)
         return Response(
             serializer.initial_data,
-            # {
-            #     'username': user.username,
-            #     'email': user.email
-            # },
             status=status.HTTP_200_OK
         )
 
@@ -58,7 +54,10 @@ class TokenView(APIView):
             User.objects.all(),
             username=serializer.validated_data['username']
         )
-        if user.confirmation_code == request.data.get('confirmation_code'):
+        if default_token_generator.check_token(
+            user,
+            serializer.validated_data['confirmation_code']
+        ):
             return Response(
                 {
                     'token': str(AccessToken.for_user(user))

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 class CastomUpdateModelMixin:
     """Миксин для обновления данных без PUT метода."""
+
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         if not partial:

@@ -1,5 +1,9 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.timezone import now
+
+from api_yamdb.constants import NAME_LENGTH, TEXT_LENGTH
 
 
 User = get_user_model()
@@ -13,7 +17,7 @@ class Category(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        return self.name[:NAME_LENGTH]
 
 
 class Genre(models.Model):
@@ -24,13 +28,13 @@ class Genre(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        return self.name[:NAME_LENGTH]
 
 
 class Title(models.Model):
     name = models.CharField('Название произведения', max_length=256)
-    year = models.IntegerField('Год')
-    description = models.TextField('Описание', blank=True, null=True)
+    year = models.PositiveSmallIntegerField('Год')
+    description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(
         Genre,
         through='TitleGenre',
@@ -46,12 +50,15 @@ class Title(models.Model):
     class Meta:
         ordering = ('name',)
 
-    @property
-    def rating(self):
-        return self.reviews.aggregate(models.Avg('score'))['score__avg']
-
     def __str__(self):
-        return self.name
+        return self.name[:NAME_LENGTH]
+
+    def clean(self):
+        current_year = now().year
+        if self.year > current_year:
+            raise ValidationError({
+                'year': 'Год произведения не может быть больше текущего.'
+            })
 
 
 class TitleGenre(models.Model):
@@ -61,9 +68,6 @@ class TitleGenre(models.Model):
     genre = models.ForeignKey(
         Genre, on_delete=models.SET_NULL, null=True,
         related_name='genre_titles')
-
-    def __str__(self):
-        return f'{self.title.name} - {self.genre.name}'
 
 
 class Review(models.Model):
@@ -83,6 +87,9 @@ class Review(models.Model):
         ]
         ordering = ('pub_date',)
 
+    def __str__(self):
+        return self.text[:NAME_LENGTH]
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
@@ -93,3 +100,6 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
+
+    def __str__(self):
+        return self.text[:TEXT_LENGTH]

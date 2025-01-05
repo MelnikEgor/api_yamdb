@@ -195,3 +195,16 @@ python manage.py runserver
 - отзыва,
 - комментариев,
 - права доступа.
+
+### Технологии:
+
+- django framework
+- Django Rest Framework
+- Python
+- Django ORM
+- sqlite
+- JWT Authentication
+- Django Filters
+- Custom Permissions
+- PageNumberPagination
+- dotenv
