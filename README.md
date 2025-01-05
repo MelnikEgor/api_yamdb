@@ -49,11 +49,15 @@ Cоздать и активировать виртуальное окружен�
 ```
 python -m venv venv
 ```
-Если у вас Linux/macOS используетй в заместо `python` -> `python3`
+> [!IMPORTANT] 
+> Если у вас Linux/macOS используетй в заместо `python` -> `python3`
 
 ```
 source venv/scripts/activate
 ```
+> [!IMPORTANT] 
+> Активация виртуального окружения, если используете Linux/macOS:
+> `source env/bin/activate`
 
 Обновите утилиту `pip`, до последней версии.
 
@@ -191,3 +195,16 @@ python manage.py runserver
 - отзыва,
 - комментариев,
 - права доступа.
+
+### Технологии:
+
+- django framework
+- Django Rest Framework
+- Python
+- Django ORM
+- sqlite
+- JWT Authentication
+- Django Filters
+- Custom Permissions
+- PageNumberPagination
+- dotenv

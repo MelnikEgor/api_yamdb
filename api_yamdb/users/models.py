@@ -1,4 +1,6 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -9,22 +11,26 @@ ROLE = (
 )
 
 
-class MyUser(AbstractUser):
+class User(AbstractUser):
     """Кастомная модель пользователя."""
 
-    password = models.CharField(
-        'Пароль',
-        max_length=128,
-        blank=True
-    )
     email = models.EmailField(
         'Электронная почта',
-        unique=True
+        unique=True,
+        error_messages={
+            'unique': (
+                'Пользователь с такой электронной почтой уже существует.'
+            )
+        },
     )
     username = models.CharField(
         'Имя пользователя',
-        max_length=128,
-        unique=True
+        unique=True,
+        max_length=150,
+        validators=[UnicodeUsernameValidator()],
+        error_messages={
+            'unique': 'Пользователь с таким именем уже существует.',
+        },
     )
     bio = models.TextField(
         'Биография',
@@ -36,8 +42,24 @@ class MyUser(AbstractUser):
         choices=ROLE,
         default='user'
     )
-    confirmation_code = models.CharField(
-        'Код подтверждения',
-        max_length=255,
-        null=True
-    )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    class Meta:
+        verbose_name = 'пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('username', 'email')
+
+    def clean(self):
+        super().clean()
+        username = self.username
+        if username.lower() == 'me':
+            raise ValidationError(
+                f"Имя пользователя не должно быть '{username}'"
+            )
+        return username
+
+    @property
+    def is_admin(self):
+        return (self.role == 'admin' or self.is_staff)

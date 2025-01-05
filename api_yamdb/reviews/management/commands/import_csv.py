@@ -14,8 +14,11 @@ class Command(BaseCommand):
     help = 'Импорт данных из CSV файлов в модели Category, Genre и Title'
 
     def add_arguments(self, parser):
-        parser.add_argument('csv_file', type=str,
-                            help='Путь к CSV файлу для импорта данных')
+        parser.add_argument(
+            'csv_file',
+            type=str,
+            help='Путь к CSV файлу для импорта данных'
+        )
 
     def handle(self, *args, **kwargs):
         csv_file_path = os.path.join('static/data', kwargs['csv_file'])
@@ -30,9 +33,12 @@ class Command(BaseCommand):
                 for row in reader:
                     self.process_row(csv_file_path, row)
 
-                self.stdout.write(self.style.SUCCESS(
-                    f'Успешно импортировано {reader.line_num}'
-                    f' записей из {csv_file_path}'))
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f'Успешно импортировано {reader.line_num}'
+                        f' записей из {csv_file_path}'
+                    )
+                )
 
         except Exception as e:
             raise CommandError(f'Ошибка при импорте данных: {e}')
