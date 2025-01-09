@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.timezone import now
@@ -11,7 +10,9 @@ User = get_user_model()
 
 
 class Category(models.Model):
-    name = models.CharField('Категория', max_length=NAME_MAX_LENGTH)
+    """Модель категорий."""
+
+    name = models.CharField('Название категории', max_length=NAME_MAX_LENGTH)
     slug = models.SlugField('Слаг', unique=True)
 
     class Meta:
@@ -24,11 +25,13 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+    """Модель жанров."""
+
     name = models.CharField('Название жанра', max_length=NAME_MAX_LENGTH)
     slug = models.SlugField('Слаг', unique=True)
 
     class Meta:
-        verbose_name = 'Жанр'
+        verbose_name = 'жанр'
         verbose_name_plural = 'Жанры'
         ordering = ('name',)
 
@@ -37,23 +40,33 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
+    """Модель произведений."""
+
     name = models.CharField(
         'Название произведения',
         max_length=NAME_MAX_LENGTH
     )
-    year = models.PositiveSmallIntegerField('Год')
+    year = models.PositiveSmallIntegerField(
+        'Год',
+        validators=[
+            MaxValueValidator(
+                now().year,
+                'Год произведения не может быть больше текущего.'
+            ),
+        ]
+    )
     description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(
-        # 'Жанры',
         Genre,
-        related_name='titles'
+        related_name='titles',
+        verbose_name='Жанры'
     )
     category = models.ForeignKey(
-        # 'Категория',
         Category,
         related_name='titles',
         on_delete=models.SET_NULL,
-        null=True
+        null=True,
+        verbose_name='Категория'
     )
 
     class Meta:
@@ -64,20 +77,15 @@ class Title(models.Model):
     def __str__(self):
         return self.name[:NAME_LENGTH]
 
-    def clean(self):
-        current_year = now().year
-        if self.year > current_year:
-            raise ValidationError({
-                'year': 'Год произведения не может быть больше текущего.'
-            })
-
 
 class Review(models.Model):
+    """Модель отзывов."""
+
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        verbose_name='Произведение',
-        related_name='reviews'
+        related_name='reviews',
+        verbose_name='Произведение'
     )
     text = models.TextField('Текст')
     author = models.ForeignKey(
@@ -90,7 +98,8 @@ class Review(models.Model):
         validators=[
             MaxValueValidator(10),
             MinValueValidator(1)
-        ]
+        ],
+        help_text=('Введите оценку от 1 до 10, целым числом.')
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
@@ -110,11 +119,13 @@ class Review(models.Model):
 
 
 class Comment(models.Model):
+    """Модель комментариев."""
+
     review = models.ForeignKey(
         Review,
-        # verbose_name='Отзыв',
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Отзыв'
     )
     text = models.TextField('Текст')
     author = models.ForeignKey(

@@ -1,18 +1,24 @@
 from django.contrib import admin
 
-from .models import Category, Comment, Review, Genre, Title
+from .models import Category, Comment, Genre, Review, Title
 
 
 admin.site.empty_value_display = 'Не задано'
 
 
-class TitleInline(admin.TabularInline):
+class TitleInline(admin.StackedInline):
     model = Title
     extra = 0
+    filter_horizontal = ('genre',)
 
 
 class ReviewInline(admin.StackedInline):
     model = Review
+    extra = 0
+
+
+class CommentInline(admin.StackedInline):
+    model = Comment
     extra = 0
 
 
@@ -25,45 +31,35 @@ class CategoryAdmin(admin.ModelAdmin):
         'name',
         'slug'
     )
-    # list_editable = (
-    #     'is_published',
-    # )
-    # search_fields = (
-    #     'title',
-    # )
-    # list_filter = (
-    #     'is_published',
-    # )
-    # list_display_links = (
-    #     'title',
-    # )
+    search_fields = (
+        'name',
+        'slug'
+    )
+    list_display_links = (
+        'name',
+    )
 
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
-    # inlines = (
-    #     PostInline,
-    # )
     list_display = (
         'name',
         'slug'
     )
-    # list_editable = (
-    #     'is_published',
-    # )
-    # search_fields = (
-    #     'title',
-    # )
-    # list_filter = (
-    #     'is_published',
-    # )
-    # list_display_links = (
-    #     'title',
-    # )
+    search_fields = (
+        'name',
+        'slug'
+    )
+    list_display_links = (
+        'name',
+    )
 
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
+    inlines = (
+        CommentInline,
+    )
     list_display = (
         'title',
         'text',
@@ -71,15 +67,21 @@ class ReviewAdmin(admin.ModelAdmin):
         'score',
         'pub_date'
     )
-    # list_editable = (
-    #     'is_published',
-    # )
-    # search_fields = (
-    #     'name',
-    # )
-    # list_filter = (
-    #     'is_published',
-    # )
+    list_editable = (
+        'text',
+    )
+    search_fields = (
+        'title__name',
+        'author__username',
+    )
+    list_filter = (
+        'title',
+        'author',
+        'score'
+    )
+    list_display_links = (
+        'title',
+    )
 
 
 @admin.register(Title)
@@ -91,28 +93,24 @@ class TitleAdmin(admin.ModelAdmin):
         'name',
         'year',
         'description',
-        # 'genre',
         'category',
     )
-    # list_editable = (
-    #     'pub_date',
-    #     'author',
-    #     'location',
-    #     'is_published',
-    #     'category'
-    # )
-    # search_fields = (
-    #     'title',
-    # )
-    # list_filter = (
-    #     'category',
-    #     'pub_date',
-    #     'location',
-    #     'author',
-    # )
-    # list_display_links = (
-    #     'title',
-    # )
+    list_editable = (
+        'description',
+        'category'
+    )
+    search_fields = (
+        'name',
+    )
+    list_filter = (
+        'category',
+    )
+    list_display_links = (
+        'name',
+    )
+    filter_horizontal = (
+        'genre',
+    )
 
 
 @admin.register(Comment)
@@ -123,12 +121,9 @@ class CommentAdmin(admin.ModelAdmin):
         'review',
         'pub_date'
     )
-    # list_editable = (
-    #     'author',
-    # )
-    # search_fields = (
-    #     'author__username',
-    # )
-    # list_filter = (
-    #     'author',
-    # )
+    search_fields = (
+        'author__username',
+    )
+    list_filter = (
+        'author',
+    )
