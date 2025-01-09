@@ -24,6 +24,11 @@ class UserSignUpView(APIView):
 
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        # user, _ = User.objects.get_or_create(
+        #     username=serializer.validated_data['username'],
+        #     defaults={'email': serializer.validated_data['email']}
+        # )
         try:
             user = User.objects.get(username=request.data.get('username'))
         except User.DoesNotExist:
@@ -51,7 +56,7 @@ class TokenView(APIView):
         serializer = TokenSerialiser(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
-            User.objects.all(),
+            User,
             username=serializer.validated_data['username']
         )
         if default_token_generator.check_token(
@@ -92,20 +97,31 @@ class UserViewSet(
 
     @action(
         detail=False,
-        methods=['GET', 'PATCH'],
+        methods=['GET'],  # , 'PATCH'],
         permission_classes=(IsAuthenticated, ),
         url_path='me'
     )
     def me(self, request):
-        if request.method == 'GET':
-            serializer = UserSerializer(request.user)
-            return Response(serializer.data)
-        if request.method == 'PATCH':
-            serializer = UserSerializer(
-                get_object_or_404(User.objects.all(), email=request.user),
-                data=request.data,
-                partial=True
-            )
+        # if request.method == 'GET':
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+        # if request.method == 'PATCH':
+        #     serializer = UserSerializer(
+        #         get_object_or_404(User, email=request.user),
+        #         data=request.data,
+        #         partial=True
+        #     )
+        #     serializer.is_valid(raise_exception=True)
+        #     serializer.save(role=request.user.role)
+        #     return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @me.mapping.patch
+    def patch_me(self, request):
+        serializer = UserSerializer(
+            get_object_or_404(User, email=request.user),
+            data=request.data,
+            partial=True
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
