@@ -29,6 +29,7 @@ class UserSignUpView(APIView):
         #     username=serializer.validated_data['username'],
         #     defaults={'email': serializer.validated_data['email']}
         # )
+
         try:
             user = User.objects.get(username=request.data.get('username'))
         except User.DoesNotExist:

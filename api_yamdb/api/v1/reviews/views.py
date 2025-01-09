@@ -5,8 +5,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 
 from .base_views import (
-    CategoryAndGenreViewSet,
-    TitleAndReviewAndCommentViewSet
+    BaseExceptFullUpdataViewSet,
+    BaseNoRetrieveAndNoUpdataViewSet
 )
 from .filters import TitleFilter
 from .serializers import (
@@ -23,21 +23,22 @@ from api.v1.permissions import IsAdminOrReadOnly
 User = get_user_model()
 
 
-class CategoryViewSet(CategoryAndGenreViewSet):
+class CategoryViewSet(BaseNoRetrieveAndNoUpdataViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
-class GenreViewSet(CategoryAndGenreViewSet):
+class GenreViewSet(BaseNoRetrieveAndNoUpdataViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
-class TitleViewSet(TitleAndReviewAndCommentViewSet):
+class TitleViewSet(BaseExceptFullUpdataViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
+    # permission_classes = [IsAdminOrReadOnly]
 
     def get_permissions(self):
         permission_classes = [IsAdminOrReadOnly]
@@ -52,29 +53,40 @@ class TitleViewSet(TitleAndReviewAndCommentViewSet):
         return Response(data)
 
 
-class ReviewViewSet(TitleAndReviewAndCommentViewSet):
+class ReviewViewSet(BaseExceptFullUpdataViewSet):
     serializer_class = ReviewSerializer
 
+    def get_title(self):
+        # title_id = self.kwargs.get('title_id')
+        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+
     def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
-        return Review.objects.filter(title_id=title_id)
+        title = self.get_title()
+        return title.reviews.all()
+        # title_id = self.kwargs.get('title_id')
+        # return Review.objects.filter(title_id=title_id)
 
     def perform_create(self, serializer):
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, id=title_id)
+        # title_id = self.kwargs.get('title_id')
+        title = self.get_title()  # get_object_or_404(Title, id=title_id)
         author = self.request.user
         serializer.save(author=author, title=title)
 
 
-class CommentViewSet(TitleAndReviewAndCommentViewSet):
+class CommentViewSet(BaseExceptFullUpdataViewSet):
     serializer_class = CommentSerializer
 
+    def get_review(self):
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        reviews = title.reviews.all()
+        return get_object_or_404(reviews, id=self.kwargs.get('review_id'))
+
     def get_queryset(self):
-        review_id = self.kwargs.get('review_id')
-        return Comment.objects.filter(review_id=review_id)
+        review = self.get_review()  # self.kwargs.get('review_id')
+        return review.comments.all()  # Comment.objects.filter(review_id=review_id)
 
     def perform_create(self, serializer):
-        review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
+        # review_id = self.kwargs.get('review_id')
+        review = self.get_review()  # get_object_or_404(Review, id=review_id)
         author = self.request.user
         serializer.save(author=author, review=review)

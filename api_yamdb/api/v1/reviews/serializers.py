@@ -22,15 +22,15 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    category = serializers.SlugRelatedField(
-        queryset=Category.objects.all(),
-        slug_field='slug',
-        write_only=True
-    )
     genre = serializers.SlugRelatedField(
         queryset=Genre.objects.all(),
         slug_field='slug',
         many=True,
+        write_only=True
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug',
         write_only=True
     )
     rating = serializers.FloatField(read_only=True)
@@ -62,6 +62,12 @@ class TitleSerializer(serializers.ModelSerializer):
         """Переопределяем вывод данных."""
         representation = super().to_representation(instance)
 
+        # Преобразование genre
+        genres = instance.genre.all().distinct()
+        representation['genre'] = [
+            {'name': genre.name, 'slug': genre.slug} for genre in genres
+        ]
+
         # Преобразование category
         category = instance.category
         if category:
@@ -69,12 +75,6 @@ class TitleSerializer(serializers.ModelSerializer):
                 'name': category.name,
                 'slug': category.slug
             }
-
-        # Преобразование genre
-        genres = instance.genre.all().distinct()
-        representation['genre'] = [
-            {'name': genre.name, 'slug': genre.slug} for genre in genres
-        ]
 
         return representation
 

@@ -37,11 +37,13 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     # def validate(self, data):
     #     try:
+    #         print('*'*60, data.get('username'), '*'*60)
     #         user = User.objects.get(username=data.get('username'))
     #         print('*'*60, user.email, '*'*60)
     #         if user.email != data.get('email'):
     #             raise serializers.ValidationError('Электронная почта указана не верно.')
     #     except User.DoesNotExist:
+    #         print('*'*60, data, '*'*60)
     #         return super().validate(data)
     #         # serializer.is_valid(raise_exception=True)
     #         # user = User.objects.create(**serializer.validated_data)
@@ -54,6 +56,9 @@ class SignUpSerializer(serializers.ModelSerializer):
     #             # )
     #     return data
     #     # return super().validate(data)
+
+    # def create(self, validated_data):
+    #     return User.objects.create(**validated_data)
 
     def validate_username(self, value):
         if value.lower() == 'me':
