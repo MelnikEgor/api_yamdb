@@ -4,6 +4,7 @@ from rest_framework.validators import UniqueValidator
 
 from api_yamdb.constants import (
     CONFIRMATION_CODE_MAX_LENGTH,
+    EMAIL_MAX_LENGTH,
     PATERN_USER,
     USERNAME_MAX_LENGTH
 )
@@ -28,37 +29,36 @@ class TokenSerialiser(serializers.Serializer):
 class SignUpSerializer(serializers.ModelSerializer):
     username = serializers.RegexField(
         PATERN_USER,
-        max_length=USERNAME_MAX_LENGTH
+        max_length=USERNAME_MAX_LENGTH,
+    )
+    email = serializers.EmailField(
+        max_length=EMAIL_MAX_LENGTH
     )
 
     class Meta:
         model = User
         fields = ('username', 'email',)
 
-    # def validate(self, data):
-    #     try:
-    #         print('*'*60, data.get('username'), '*'*60)
-    #         user = User.objects.get(username=data.get('username'))
-    #         print('*'*60, user.email, '*'*60)
-    #         if user.email != data.get('email'):
-    #             raise serializers.ValidationError('Электронная почта указана не верно.')
-    #     except User.DoesNotExist:
-    #         print('*'*60, data, '*'*60)
-    #         return super().validate(data)
-    #         # serializer.is_valid(raise_exception=True)
-    #         # user = User.objects.create(**serializer.validated_data)
-    #     # else:
-    #             # return Response(
-    #             #     {
-    #             #         'error': 'Электронная почта указана не верно.'
-    #             #     },
-    #             #     status=status.HTTP_400_BAD_REQUEST
-    #             # )
-    #     return data
-    #     # return super().validate(data)
-
-    # def create(self, validated_data):
-    #     return User.objects.create(**validated_data)
+    def validate(self, data):
+        email = data.get('email')
+        try:
+            user = User.objects.get(username=data.get('username'))
+            if user.email != email:
+                raise serializers.ValidationError(
+                    {
+                        'email': 'Электронная почта указана не верно.'
+                        'Введите правильный адрес электронной почты.'
+                    }
+                )
+        except User.DoesNotExist:
+            if User.objects.filter(email=email):
+                raise serializers.ValidationError(
+                    {
+                        'email': 'Данный адрес электронной '
+                        'почты уже существует.'
+                    }
+                )
+        return data
 
     def validate_username(self, value):
         if value.lower() == 'me':

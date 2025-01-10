@@ -21,19 +21,10 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
-        queryset=Genre.objects.all(),
-        slug_field='slug',
-        many=True,
-        write_only=True
-    )
-    category = serializers.SlugRelatedField(
-        queryset=Category.objects.all(),
-        slug_field='slug',
-        write_only=True
-    )
-    rating = serializers.FloatField(read_only=True)
+class TitleReadSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
@@ -41,11 +32,27 @@ class TitleSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         ]
 
+
+class TitleWriteSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug',
+        write_only=True
+    )
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True,
+        write_only=True
+    )
+
+    class Meta:
+        model = Title
+        fields = [
+            'id', 'name', 'year', 'description', 'genre', 'category'
+        ]
+
     def validate_year(self, value):
-        if not value:
-            raise serializers.ValidationError(
-                'Поле year обязательно для заполнения.'
-            )
         current_year = now().year
         if value > current_year:
             raise serializers.ValidationError(
@@ -53,30 +60,9 @@ class TitleSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def get_rating(self, obj):
-        if obj.rating is not None:
-            return round(obj.rating, 2)
-        return None
-
     def to_representation(self, instance):
-        """Переопределяем вывод данных."""
-        representation = super().to_representation(instance)
-
-        # Преобразование genre
-        genres = instance.genre.all().distinct()
-        representation['genre'] = [
-            {'name': genre.name, 'slug': genre.slug} for genre in genres
-        ]
-
-        # Преобразование category
-        category = instance.category
-        if category:
-            representation['category'] = {
-                'name': category.name,
-                'slug': category.slug
-            }
-
-        return representation
+        repr = TitleReadSerializer(data=instance).to_representation(instance)
+        return repr
 
 
 class ReviewSerializer(serializers.ModelSerializer):
