@@ -14,7 +14,6 @@ from .serializers import (
     CommentSerializer,
     GenreSerializer,
     ReviewSerializer,
-    # TitleSerializer
     TitleReadSerializer,
     TitleWriteSerializer
 )
@@ -34,49 +33,6 @@ class CategoryViewSet(BaseNoRetrieveAndNoUpdataViewSet):
 class GenreViewSet(BaseNoRetrieveAndNoUpdataViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-
-
-# class TitleViewSet(BaseExceptFullUpdataViewSet):
-#     queryset = Title.objects.all()
-#     serializer_class = TitleSerializer
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_class = TitleFilter
-#     # permission_classes = [IsAdminOrReadOnly]
-
-#     def get_permissions(self):
-#         permission_classes = [IsAdminOrReadOnly]
-#         return [permission() for permission in permission_classes]
-
-#     def retrieve(self, request, *args, **kwargs):
-#         title = self.get_object()
-#         serializer = self.get_serializer(title)
-#         rating = title.reviews.aggregate(Avg('score'))['score__avg']
-#         data = serializer.data
-#         data['rating'] = rating
-#         return Response(data)
-
-
-# class TitleViewSet(BaseExceptFullUpdataViewSet):
-#     queryset = Title.objects.all()
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_class = TitleFilter
-
-#     def get_serializer_class(self):
-#         if self.action in ['list', 'retrieve']:
-#             return TitleReadSerializer
-#         return TitleWriteSerializer
-
-#     def get_permissions(self):
-#         permission_classes = [IsAdminOrReadOnly]
-#         return [permission() for permission in permission_classes]
-
-#     def retrieve(self, request, *args, **kwargs):
-#         title = self.get_object()
-#         serializer = self.get_serializer(title)
-#         rating = title.reviews.aggregate(Avg('score'))['score__avg']
-#         data = serializer.data
-#         data['rating'] = round(rating, 2) if rating is not None else None
-#         return Response(data)
 
 
 class TitleViewSet(
@@ -100,10 +56,6 @@ class TitleViewSet(
         if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
         return TitleWriteSerializer
-
-    # def get_permissions(self):
-    #     permission_classes = [IsAdminOrReadOnly]
-    #     return [permission() for permission in permission_classes]
 
 
 class ReviewViewSet(BaseExceptFullUpdataViewSet):
