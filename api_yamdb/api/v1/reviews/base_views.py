@@ -5,7 +5,7 @@ from api.v1.mixins import CastomUpdateModelMixin
 from api.v1.permissions import IsAdminOrModerOrReadOnly, IsAdminOrReadOnly
 
 
-class CategoryAndGenreViewSet(
+class BaseNoRetrieveAndNoUpdataViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
@@ -17,7 +17,7 @@ class CategoryAndGenreViewSet(
     lookup_field = 'slug'
 
 
-class TitleAndReviewAndCommentViewSet(
+class BaseExceptFullUpdataViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
@@ -28,5 +28,6 @@ class TitleAndReviewAndCommentViewSet(
     def get_permissions(self):
         if self.action == 'create':
             permission_classes = [permissions.IsAuthenticated]
-        permission_classes = [IsAdminOrModerOrReadOnly]
+        else:
+            permission_classes = [IsAdminOrModerOrReadOnly]
         return [permission() for permission in permission_classes]

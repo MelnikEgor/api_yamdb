@@ -3,11 +3,19 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from api_yamdb.constants import (
+    ROLE_ADMIN,
+    ROLE_MAX_LENGTH,
+    ROLE_MODERATOR,
+    ROLE_USER,
+    USERNAME_MAX_LENGTH
+)
+
 
 ROLE = (
-    ('user', 'Пользователь'),
-    ('moderator', 'Модератор'),
-    ('admin', 'Админ')
+    (ROLE_USER, 'Пользователь'),
+    (ROLE_MODERATOR, 'Модератор'),
+    (ROLE_ADMIN, 'Админ')
 )
 
 
@@ -20,13 +28,14 @@ class User(AbstractUser):
         error_messages={
             'unique': (
                 'Пользователь с такой электронной почтой уже существует.'
-            )
+            ),
+            'blank': 'Адрес электронной почты обязателен.'
         },
     )
     username = models.CharField(
         'Имя пользователя',
         unique=True,
-        max_length=150,
+        max_length=USERNAME_MAX_LENGTH,
         validators=[UnicodeUsernameValidator()],
         error_messages={
             'unique': 'Пользователь с таким именем уже существует.',
@@ -38,9 +47,9 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'Роль',
-        max_length=16,
+        max_length=ROLE_MAX_LENGTH,
         choices=ROLE,
-        default='user'
+        default=ROLE_USER
     )
 
     USERNAME_FIELD = 'email'
@@ -58,8 +67,11 @@ class User(AbstractUser):
             raise ValidationError(
                 f"Имя пользователя не должно быть '{username}'"
             )
-        return username
 
     @property
     def is_admin(self):
-        return (self.role == 'admin' or self.is_staff)
+        return self.role == ROLE_ADMIN or self.is_staff
+
+    @property
+    def is_moder(self):
+        return self.role == ROLE_MODERATOR

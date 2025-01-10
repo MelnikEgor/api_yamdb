@@ -4,7 +4,7 @@ import os
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
-from reviews.models import Category, Comment, Genre, Review, Title, TitleGenre
+from reviews.models import Category, Comment, Genre, Review, Title
 
 
 User = get_user_model()
@@ -64,10 +64,7 @@ class Command(BaseCommand):
     def import_genre_title(self, row):
         title = Title.objects.get(id=row['title_id'])
         genre = Genre.objects.get(id=row['genre_id'])
-        TitleGenre.objects.update_or_create(
-            title=title,
-            genre=genre,
-        )
+        genre.titles.add(title)
 
     def import_users(self, row):
         User.objects.update_or_create(
