@@ -78,7 +78,6 @@ class Title(models.Model):
         return self.name[:NAME_LENGTH]
 
 
-
 class Review(models.Model):
     """Модель отзывов."""
 
