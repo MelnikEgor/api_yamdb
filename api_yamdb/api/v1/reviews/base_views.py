@@ -25,9 +25,9 @@ class BaseExceptFullUpdataViewSet(
     CastomUpdateModelMixin,
     viewsets.GenericViewSet
 ):
+    permission_classes = [IsAdminOrModerOrReadOnly]
+
     def get_permissions(self):
         if self.action == 'create':
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [IsAdminOrModerOrReadOnly]
-        return [permission() for permission in permission_classes]
+            self.permission_classes = [permissions.IsAuthenticated]
+        return super().get_permissions()

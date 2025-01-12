@@ -61,8 +61,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         return value
 
     def to_representation(self, instance):
-        repr = TitleReadSerializer(data=instance).to_representation(instance)
-        return repr
+        return TitleReadSerializer(data=instance).to_representation(instance)
 
 
 class ReviewSerializer(serializers.ModelSerializer):

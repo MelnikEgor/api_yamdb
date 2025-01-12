@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from .mixins import UserameNotMeMixin
 from api_yamdb.constants import (
     CONFIRMATION_CODE_MAX_LENGTH,
     EMAIL_MAX_LENGTH,
@@ -26,7 +27,7 @@ class TokenSerialiser(serializers.Serializer):
     )
 
 
-class SignUpSerializer(serializers.ModelSerializer):
+class SignUpSerializer(serializers.ModelSerializer, UserameNotMeMixin):
     username = serializers.RegexField(
         PATERN_USER,
         max_length=USERNAME_MAX_LENGTH,
@@ -60,15 +61,8 @@ class SignUpSerializer(serializers.ModelSerializer):
                 )
         return data
 
-    def validate_username(self, value):
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                f"Имя пользователя не должно быть '{value}'"
-            )
-        return value
 
-
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer, UserameNotMeMixin):
     username = serializers.RegexField(
         PATERN_USER,
         max_length=USERNAME_MAX_LENGTH,
@@ -85,10 +79,3 @@ class UserSerializer(serializers.ModelSerializer):
             'bio',
             'role',
         )
-
-    def validate_username(self, value):
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                f"Имя пользователя не должно быть '{value}'"
-            )
-        return value

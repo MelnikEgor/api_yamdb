@@ -19,7 +19,7 @@ from .serializers import (
 )
 from api.v1.mixins import CastomUpdateModelMixin
 from api.v1.permissions import IsAdminOrReadOnly
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Genre, Review, Title
 
 
 User = get_user_model()
@@ -65,28 +65,23 @@ class ReviewViewSet(BaseExceptFullUpdataViewSet):
         return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
-        title = self.get_title()
-        return title.reviews.all()
+        return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
-        title = self.get_title()
-        author = self.request.user
-        serializer.save(author=author, title=title)
+        serializer.save(author=self.request.user, title=self.get_title())
 
 
 class CommentViewSet(BaseExceptFullUpdataViewSet):
     serializer_class = CommentSerializer
 
     def get_review(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        reviews = title.reviews.all()
-        return get_object_or_404(reviews, id=self.kwargs.get('review_id'))
+        return get_object_or_404(
+            Review.objects.filter(title_id=self.kwargs.get('title_id')),
+            id=self.kwargs.get('review_id')
+        )
 
     def get_queryset(self):
-        review = self.get_review()
-        return review.comments.all()
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
-        review = self.get_review()
-        author = self.request.user
-        serializer.save(author=author, review=review)
+        serializer.save(author=self.request.user, review=self.get_review())
